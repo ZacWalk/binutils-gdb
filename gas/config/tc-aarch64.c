@@ -10250,9 +10250,10 @@ struct aarch64_option_abi_value_table
   enum aarch64_abi_type value;
 };
 
-#ifdef OBJ_ELF
 static const struct aarch64_option_abi_value_table aarch64_abis[] = {
+#ifdef OBJ_ELF
   {"ilp32",		AARCH64_ABI_ILP32},
+#endif
   {"lp64",		AARCH64_ABI_LP64},
 };
 
@@ -10277,13 +10278,10 @@ aarch64_parse_abi (const char *str)
   as_bad (_("unknown abi `%s'\n"), str);
   return 0;
 }
-#endif
 
 static struct aarch64_long_option_table aarch64_long_opts[] = {
-#ifdef OBJ_ELF
   {"mabi=", N_("<abi name>\t  specify for ABI <abi name>"),
    aarch64_parse_abi, NULL},
-#endif /* OBJ_ELF */
   {"mcpu=", N_("<cpu name>\t  assemble for CPU <cpu name>"),
    aarch64_parse_cpu, NULL},
   {"march=", N_("<arch name>\t  assemble for architecture <arch name>"),
