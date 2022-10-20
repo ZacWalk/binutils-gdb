@@ -7,14 +7,14 @@ on:
     branches: [ "aarch64-pe-dev" ]
 
 jobs:
-  build:
+  build-aarch64:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
     
-    - name: configure aarch64-pe
+    - name: configure
       run: ./configure --target=aarch64-pe --prefix="$HOME/cross"
       
     - name: build
@@ -25,3 +25,16 @@ jobs:
       
 #    - name: Run distcheck
 #      run: make distcheck
+
+  build-all-targets:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: configure
+      run: ./configure --enable-targets=all
+      
+    - name: build
+      run: make
