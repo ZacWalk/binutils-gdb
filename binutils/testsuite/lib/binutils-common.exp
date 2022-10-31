@@ -959,6 +959,10 @@ proc run_dump_test { name {extra_options {}} } {
 	    regsub -all {\$subdir} "$opt_val" "$subdir" opt_val
 	}
 
+	if { $opt_name == "as" && ![is_elf_format] } {
+	    regsub -all -- {--generate-missing-build-notes=no} "$opt_val" "" opt_val
+	}
+
 	switch -- $opt_name {
 	    xfail {}
 	    target {}
