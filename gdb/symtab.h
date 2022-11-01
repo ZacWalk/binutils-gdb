@@ -1069,7 +1069,7 @@ struct symbol_computed_ops
      FRAME may be zero.  */
 
   struct value *(*read_variable) (struct symbol * symbol,
-				  frame_info_ptr  frame);
+				  frame_info_ptr frame);
 
   /* Read variable SYMBOL like read_variable at (callee) FRAME's function
      entry.  SYMBOL should be a function parameter, otherwise
@@ -1840,6 +1840,9 @@ struct compunit_symtab
   /* Find call_site info for PC.  */
   call_site *find_call_site (CORE_ADDR pc) const;
 
+  /* Return the language of this compunit_symtab.  */
+  enum language language () const;
+
   /* Unordered chain of all compunit symtabs of this objfile.  */
   struct compunit_symtab *next;
 
@@ -1919,10 +1922,6 @@ struct compunit_symtab
 };
 
 using compunit_symtab_range = next_range<compunit_symtab>;
-
-/* Return the language of CUST.  */
-
-extern enum language compunit_language (const struct compunit_symtab *cust);
 
 /* Return true if this symtab is the "main" symtab of its compunit_symtab.  */
 
@@ -2254,7 +2253,7 @@ struct gnu_ifunc_fns
 
 extern const struct gnu_ifunc_fns *gnu_ifunc_fns_p;
 
-extern CORE_ADDR find_solib_trampoline_target (frame_info_ptr , CORE_ADDR);
+extern CORE_ADDR find_solib_trampoline_target (frame_info_ptr, CORE_ADDR);
 
 struct symtab_and_line
 {

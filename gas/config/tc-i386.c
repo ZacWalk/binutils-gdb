@@ -1076,6 +1076,7 @@ static const arch_entry cpu_arch[] =
   SUBARCH (cldemote, CLDEMOTE, CLDEMOTE, false),
   SUBARCH (amx_int8, AMX_INT8, ANY_AMX_INT8, false),
   SUBARCH (amx_bf16, AMX_BF16, ANY_AMX_BF16, false),
+  SUBARCH (amx_fp16, AMX_FP16, AMX_FP16, false),
   SUBARCH (amx_tile, AMX_TILE, ANY_AMX_TILE, false),
   SUBARCH (movdiri, MOVDIRI, ANY_MOVDIRI, false),
   SUBARCH (movdir64b, MOVDIR64B, ANY_MOVDIR64B, false),
@@ -6456,12 +6457,6 @@ match_template (char mnem_suffix)
       if (cpu_flags_match (t) != CPU_FLAGS_PERFECT_MATCH)
 	continue;
 
-      /* Check Pseudo Prefix.  */
-      if (t->opcode_modifier.pseudovexprefix
-	  && !(i.vec_encoding == vex_encoding_vex
-	      || i.vec_encoding == vex_encoding_vex3))
-	continue;
-
       /* Check AT&T mnemonic.   */
       specific_error = progress (unsupported_with_intel_mnemonic);
       if (intel_mnemonic && t->opcode_modifier.attmnemonic)
@@ -6827,15 +6822,15 @@ match_template (char mnem_suffix)
 	     slip through to break.  */
 	}
 
-      /* Check if vector operands are valid.  */
-      if (check_VecOperands (t))
+      /* Check if VEX/EVEX encoding requirements can be satisfied.  */
+      if (VEX_check_encoding (t))
 	{
 	  specific_error = progress (i.error);
 	  continue;
 	}
 
-      /* Check if VEX/EVEX encoding requirements can be satisfied.  */
-      if (VEX_check_encoding (t))
+      /* Check if vector operands are valid.  */
+      if (check_VecOperands (t))
 	{
 	  specific_error = progress (i.error);
 	  continue;

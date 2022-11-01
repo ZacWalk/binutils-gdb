@@ -1401,7 +1401,7 @@ fsca_s (int in, double (*f) (double))
   lower = result - error;
   frac = frexp (lower, &exp);
   lower = ldexp (ceil (ldexp (frac, 24)), exp - 24);
-  return abs (upper - result) >= abs (lower - result) ? upper : lower;
+  return fabs (upper - result) >= fabs (lower - result) ? upper : lower;
 }
 
 static float
@@ -1491,8 +1491,6 @@ get_loop_bounds (int rs, int re, unsigned char *memory, unsigned char *mem_end,
 
   return loop;
 }
-
-static void ppi_insn ();
 
 #include "ppi.c"
 

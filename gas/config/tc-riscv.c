@@ -279,6 +279,17 @@ static riscv_parse_subset_t riscv_rps_as =
   true,			/* check_unknown_prefixed_ext.  */
 };
 
+/* Update the architecture string in the subset_list.  */
+
+static void
+riscv_reset_subsets_list_arch_str (void)
+{
+  riscv_subset_list_t *subsets = riscv_rps_as.subset_list;
+  if (subsets->arch_str != NULL)
+    free ((void *) subsets->arch_str);
+  subsets->arch_str = riscv_arch_str (xlen, subsets);
+}
+
 /* This structure is used to hold a stack of .option values.  */
 struct riscv_option_stack
 {
@@ -306,9 +317,11 @@ riscv_set_arch (const char *s)
       riscv_rps_as.subset_list = XNEW (riscv_subset_list_t);
       riscv_rps_as.subset_list->head = NULL;
       riscv_rps_as.subset_list->tail = NULL;
+      riscv_rps_as.subset_list->arch_str = NULL;
     }
   riscv_release_subset_list (riscv_rps_as.subset_list);
   riscv_parse_subset (&riscv_rps_as, s);
+  riscv_reset_subsets_list_arch_str ();
 
   riscv_set_rvc (false);
   if (riscv_subset_supports (&riscv_rps_as, "c"))
@@ -462,16 +475,27 @@ static char *expr_end;
 static void
 make_mapping_symbol (enum riscv_seg_mstate state,
 		     valueT value,
-		     fragS *frag)
+		     fragS *frag,
+		     bool reset_seg_arch_str)
 {
   const char *name;
+  char *buff = NULL;
   switch (state)
     {
     case MAP_DATA:
       name = "$d";
       break;
     case MAP_INSN:
-      name = "$x";
+      if (reset_seg_arch_str)
+	{
+	  const char *isa = riscv_rps_as.subset_list->arch_str;
+	  size_t size = strlen (isa) + 3; /* "rv" + '\0'  */
+	  buff = xmalloc (size);
+	  snprintf (buff, size, "$x%s", isa);
+	  name = buff;
+	}
+      else
+	name = "$x";
       break;
     default:
       abort ();
@@ -479,32 +503,38 @@ make_mapping_symbol (enum riscv_seg_mstate state,
 
   symbolS *symbol = symbol_new (name, now_seg, frag, value);
   symbol_get_bfdsym (symbol)->flags |= (BSF_NO_FLAGS | BSF_LOCAL);
+  if (reset_seg_arch_str)
+    {
+      /* Store current $x+arch into tc_segment_info.  */
+      seg_info (now_seg)->tc_segment_info_data.arch_map_symbol = symbol;
+      xfree ((void *) buff);
+    }
 
   /* If .fill or other data filling directive generates zero sized data,
-     or we are adding odd alignemnts, then the mapping symbol for the
-     following code will have the same value.  */
+     then mapping symbol for the following code will have the same value.
+
+     Please see gas/testsuite/gas/riscv/mapping.s: .text.zero.fill.first
+     and .text.zero.fill.last.  */
+  symbolS *first = frag->tc_frag_data.first_map_symbol;
+  symbolS *last = frag->tc_frag_data.last_map_symbol;
   if (value == 0)
     {
-       if (frag->tc_frag_data.first_map_symbol != NULL)
+      if (first != NULL)
 	{
-	  know (S_GET_VALUE (frag->tc_frag_data.first_map_symbol)
-		== S_GET_VALUE (symbol));
+	  know (S_GET_VALUE (first) == S_GET_VALUE (symbol)
+		&& first == last);
 	  /* Remove the old one.  */
-	  symbol_remove (frag->tc_frag_data.first_map_symbol,
-			 &symbol_rootP, &symbol_lastP);
+	  symbol_remove (first, &symbol_rootP, &symbol_lastP);
 	}
       frag->tc_frag_data.first_map_symbol = symbol;
     }
-  if (frag->tc_frag_data.last_map_symbol != NULL)
+  else if (last != NULL)
     {
       /* The mapping symbols should be added in offset order.  */
-      know (S_GET_VALUE (frag->tc_frag_data.last_map_symbol)
-			 <= S_GET_VALUE (symbol));
+      know (S_GET_VALUE (last) <= S_GET_VALUE (symbol));
       /* Remove the old one.  */
-      if (S_GET_VALUE (frag->tc_frag_data.last_map_symbol)
-	  == S_GET_VALUE (symbol))
-	symbol_remove (frag->tc_frag_data.last_map_symbol,
-		       &symbol_rootP, &symbol_lastP);
+      if (S_GET_VALUE (last) == S_GET_VALUE (symbol))
+	symbol_remove (last, &symbol_rootP, &symbol_lastP);
     }
   frag->tc_frag_data.last_map_symbol = symbol;
 }
@@ -513,13 +543,15 @@ make_mapping_symbol (enum riscv_seg_mstate state,
 
 void
 riscv_mapping_state (enum riscv_seg_mstate to_state,
-		     int max_chars)
+		     int max_chars,
+		     bool fr_align_code)
 {
   enum riscv_seg_mstate from_state =
 	seg_info (now_seg)->tc_segment_info_data.map_state;
+  bool reset_seg_arch_str = false;
 
   if (!SEG_NORMAL (now_seg)
-      /* For now I only add the mapping symbols to text sections.
+      /* For now we only add the mapping symbols to text sections.
 	 Therefore, the dis-assembler only show the actual contents
 	 distribution for text.  Other sections will be shown as
 	 data without the details.  */
@@ -527,13 +559,28 @@ riscv_mapping_state (enum riscv_seg_mstate to_state,
     return;
 
   /* The mapping symbol should be emitted if not in the right
-     mapping state  */
-  if (from_state == to_state)
+     mapping state.  */
+  symbolS *seg_arch_symbol =
+	seg_info (now_seg)->tc_segment_info_data.arch_map_symbol;
+  if (to_state == MAP_INSN && seg_arch_symbol == 0)
+    {
+      /* Always add $x+arch at the first instruction of section.  */
+      reset_seg_arch_str = true;
+    }
+  else if (seg_arch_symbol != 0
+	   && to_state == MAP_INSN
+	   && !fr_align_code
+	   && strcmp (riscv_rps_as.subset_list->arch_str,
+		      S_GET_NAME (seg_arch_symbol) + 2) != 0)
+    {
+      reset_seg_arch_str = true;
+    }
+  else if (from_state == to_state)
     return;
 
   valueT value = (valueT) (frag_now_fix () - max_chars);
   seg_info (now_seg)->tc_segment_info_data.map_state = to_state;
-  make_mapping_symbol (to_state, value, frag_now);
+  make_mapping_symbol (to_state, value, frag_now, reset_seg_arch_str);
 }
 
 /* Add the odd bytes of paddings for riscv_handle_align.  */
@@ -542,9 +589,27 @@ static void
 riscv_add_odd_padding_symbol (fragS *frag)
 {
   /* If there was already a mapping symbol, it should be
-     removed in the make_mapping_symbol.  */
-  make_mapping_symbol (MAP_DATA, frag->fr_fix, frag);
-  make_mapping_symbol (MAP_INSN, frag->fr_fix + 1, frag);
+     removed in the make_mapping_symbol.
+
+     Please see gas/testsuite/gas/riscv/mapping.s: .text.odd.align.  */
+  make_mapping_symbol (MAP_DATA, frag->fr_fix, frag, false);
+  make_mapping_symbol (MAP_INSN, frag->fr_fix + 1, frag, false);
+}
+
+/* If previous and current mapping symbol have same value, then remove the
+   current $x only if the previous is $x+arch; Otherwise, always remove the
+   previous.  */
+
+static void
+riscv_remove_mapping_symbol (symbolS *pre, symbolS *cur)
+{
+  know (pre != NULL && cur != NULL
+	&& S_GET_VALUE (pre) == S_GET_VALUE (cur));
+  symbolS *removed = pre;
+  if (strncmp (S_GET_NAME (pre), "$xrv", 4) == 0
+      && strcmp (S_GET_NAME (cur), "$x") == 0)
+    removed = cur;
+  symbol_remove (removed, &symbol_rootP, &symbol_lastP);
 }
 
 /* Remove any excess mapping symbols generated for alignment frags in
@@ -581,17 +646,24 @@ riscv_check_mapping_symbols (bfd *abfd ATTRIBUTE_UNUSED,
 
       do
 	{
-	  if (next->tc_frag_data.first_map_symbol != NULL)
+	  symbolS *next_first = next->tc_frag_data.first_map_symbol;
+	  if (next_first != NULL)
 	    {
 	      /* The last mapping symbol overlaps with another one
-		 which at the start of the next frag.  */
-	      symbol_remove (last, &symbol_rootP, &symbol_lastP);
+		 which at the start of the next frag.
+
+		 Please see the gas/testsuite/gas/riscv/mapping.s:
+		 .text.zero.fill.align.A and .text.zero.fill.align.B.  */
+	      riscv_remove_mapping_symbol (last, next_first);
 	      break;
 	    }
 
 	  if (next->fr_next == NULL)
 	    {
-	      /* The last mapping symbol is at the end of the section.  */
+	      /* The last mapping symbol is at the end of the section.
+
+		 Please see the gas/testsuite/gas/riscv/mapping.s:
+		 .text.last.section.  */
 	      know (next->fr_fix == 0 && next->fr_var == 0);
 	      symbol_remove (last, &symbol_rootP, &symbol_lastP);
 	      break;
@@ -1109,7 +1181,8 @@ arg_lookup (char **s, const char *const *array, size_t size, unsigned *regnop)
 
 /* For consistency checking, verify that all bits are specified either
    by the match/mask part of the instruction definition, or by the
-   operand list. The `length` could be 0, 4 or 8, 0 for auto detection.  */
+   operand list. The `length` could be the actual instruction length or
+   0 for auto-detection.  */
 
 static bool
 validate_riscv_insn (const struct riscv_opcode *opc, int length)
@@ -1120,11 +1193,13 @@ validate_riscv_insn (const struct riscv_opcode *opc, int length)
   insn_t required_bits;
 
   if (length == 0)
-    insn_width = 8 * riscv_insn_length (opc->match);
-  else
-    insn_width = 8 * length;
+    length = riscv_insn_length (opc->match);
+  /* We don't support instructions longer than 64-bits yet.  */
+  if (length > 8)
+    length = 8;
+  insn_width = 8 * length;
 
-  required_bits = ~0ULL >> (64 - insn_width);
+  required_bits = ((insn_t)~0ULL) >> (64 - insn_width);
 
   if ((used_bits & opc->match) != (opc->match & required_bits))
     {
@@ -1310,8 +1385,8 @@ validate_riscv_insn (const struct riscv_opcode *opc, int length)
   if (used_bits != required_bits)
     {
       as_bad (_("internal: bad RISC-V opcode "
-		"(bits 0x%lx undefined): %s %s"),
-	      ~(unsigned long)(used_bits & required_bits),
+		"(bits %#llx undefined or invalid): %s %s"),
+	      (unsigned long long)(used_bits ^ required_bits),
 	      opc->name, opc->args);
       return false;
     }
@@ -3455,7 +3530,7 @@ md_assemble (char *str)
        return;
     }
 
-  riscv_mapping_state (MAP_INSN, 0);
+  riscv_mapping_state (MAP_INSN, 0, false/* fr_align_code */);
 
   const struct riscv_ip_error error = riscv_ip (str, &insn, &imm_expr,
 						&imm_reloc, op_hash);
@@ -3963,11 +4038,13 @@ s_riscv_option (int x ATTRIBUTE_UNUSED)
   if (strcmp (name, "rvc") == 0)
     {
       riscv_update_subset (&riscv_rps_as, "+c");
+      riscv_reset_subsets_list_arch_str ();
       riscv_set_rvc (true);
     }
   else if (strcmp (name, "norvc") == 0)
     {
       riscv_update_subset (&riscv_rps_as, "-c");
+      riscv_reset_subsets_list_arch_str ();
       riscv_set_rvc (false);
     }
   else if (strcmp (name, "pic") == 0)
@@ -3988,6 +4065,7 @@ s_riscv_option (int x ATTRIBUTE_UNUSED)
       if (ISSPACE (*name) && *name != '\0')
 	name++;
       riscv_update_subset (&riscv_rps_as, name);
+      riscv_reset_subsets_list_arch_str ();
 
       riscv_set_rvc (false);
       if (riscv_subset_supports (&riscv_rps_as, "c"))
@@ -4117,6 +4195,10 @@ riscv_frag_align_code (int n)
   if (!riscv_opts.relax)
     return false;
 
+  /* Maybe we should use frag_var to create a new rs_align_code fragment,
+     rather than just use frag_more to handle an alignment here?  So that we
+     don't need to call riscv_mapping_state again later, and then only need
+     to check frag->fr_type to see if it is frag_align_code.  */
   nops = frag_more (worst_case_bytes);
 
   ex.X_op = O_constant;
@@ -4127,7 +4209,7 @@ riscv_frag_align_code (int n)
   fix_new_exp (frag_now, nops - frag_now->fr_literal, 0,
 	       &ex, false, BFD_RELOC_RISCV_ALIGN);
 
-  riscv_mapping_state (MAP_INSN, worst_case_bytes);
+  riscv_mapping_state (MAP_INSN, worst_case_bytes, true/* fr_align_code */);
 
   /* We need to start a new frag after the alignment which may be removed by
      the linker, to prevent the assembler from computing static offsets.
@@ -4201,10 +4283,10 @@ riscv_init_frag (fragS * fragP, int max_chars)
     case rs_fill:
     case rs_align:
     case rs_align_test:
-      riscv_mapping_state (MAP_DATA, max_chars);
+      riscv_mapping_state (MAP_DATA, max_chars, false/* fr_align_code */);
       break;
     case rs_align_code:
-      riscv_mapping_state (MAP_INSN, max_chars);
+      riscv_mapping_state (MAP_INSN, max_chars, true/* fr_align_code */);
       break;
     default:
       break;
@@ -4436,6 +4518,7 @@ void
 riscv_elf_final_processing (void)
 {
   riscv_set_abi_by_arch ();
+  riscv_release_subset_list (riscv_rps_as.subset_list);
   elf_elfheader (stdoutput)->e_flags |= elf_flags;
 }
 
@@ -4477,7 +4560,7 @@ s_riscv_insn (int x ATTRIBUTE_UNUSED)
   save_c = *input_line_pointer;
   *input_line_pointer = '\0';
 
-  riscv_mapping_state (MAP_INSN, 0);
+  riscv_mapping_state (MAP_INSN, 0, false/* fr_align_code */);
 
   struct riscv_ip_error error = riscv_ip (str, &insn, &imm_expr,
 				&imm_reloc, insn_type_hash);
@@ -4520,9 +4603,8 @@ riscv_write_out_attrs (void)
   unsigned int i;
 
   /* Re-write architecture elf attribute.  */
-  arch_str = riscv_arch_str (xlen, riscv_rps_as.subset_list);
+  arch_str = riscv_rps_as.subset_list->arch_str;
   bfd_elf_add_proc_attr_string (stdoutput, Tag_RISCV_arch, arch_str);
-  xfree ((void *) arch_str);
 
   /* For the file without any instruction, we don't set the default_priv_spec
      according to the privileged elf attributes since the md_assemble isn't

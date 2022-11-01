@@ -84,9 +84,9 @@ static void follow_inferior_reset_breakpoints (void);
 
 static bool currently_stepping (struct thread_info *tp);
 
-static void insert_hp_step_resume_breakpoint_at_frame (frame_info_ptr );
+static void insert_hp_step_resume_breakpoint_at_frame (frame_info_ptr);
 
-static void insert_step_resume_breakpoint_at_caller (frame_info_ptr );
+static void insert_step_resume_breakpoint_at_caller (frame_info_ptr);
 
 static void insert_longjmp_resume_breakpoint (struct gdbarch *, CORE_ADDR);
 
@@ -3473,7 +3473,7 @@ static void handle_step_into_function_backward (struct gdbarch *gdbarch,
 						struct execution_control_state *ecs);
 static void handle_signal_stop (struct execution_control_state *ecs);
 static void check_exception_resume (struct execution_control_state *,
-				    frame_info_ptr );
+				    frame_info_ptr);
 
 static void end_stepping_range (struct execution_control_state *ecs);
 static void stop_waiting (struct execution_control_state *ecs);
@@ -6955,7 +6955,10 @@ process_event_stop_test (struct execution_control_state *ecs)
 
   if (execution_direction != EXEC_REVERSE
       && ecs->event_thread->control.step_over_calls == STEP_OVER_UNDEBUGGABLE
-      && in_solib_dynsym_resolve_code (ecs->event_thread->stop_pc ()))
+      && in_solib_dynsym_resolve_code (ecs->event_thread->stop_pc ())
+      && !in_solib_dynsym_resolve_code (
+	  ecs->event_thread->control.step_start_function->value_block ()
+	      ->entry_pc ()))
     {
       CORE_ADDR pc_after_resolver =
 	gdbarch_skip_solib_resolver (gdbarch, ecs->event_thread->stop_pc ());
@@ -7127,7 +7130,7 @@ process_event_stop_test (struct execution_control_state *ecs)
 		  sr_sal.pc = ecs->stop_func_start;
 		  sr_sal.pspace = get_frame_program_space (frame);
 		  insert_step_resume_breakpoint_at_sal (gdbarch,
-							sr_sal, null_frame_id);
+							sr_sal, get_stack_frame_id (frame));
 		}
 	    }
 	  else
@@ -7785,7 +7788,7 @@ handle_step_into_function (struct gdbarch *gdbarch,
 
   compunit_symtab *cust
     = find_pc_compunit_symtab (ecs->event_thread->stop_pc ());
-  if (cust != NULL && compunit_language (cust) != language_asm)
+  if (cust != NULL && cust->language () != language_asm)
     ecs->stop_func_start
       = gdbarch_skip_prologue_noexcept (gdbarch, ecs->stop_func_start);
 
@@ -7864,7 +7867,7 @@ handle_step_into_function_backward (struct gdbarch *gdbarch,
   fill_in_stop_func (gdbarch, ecs);
 
   cust = find_pc_compunit_symtab (ecs->event_thread->stop_pc ());
-  if (cust != NULL && compunit_language (cust) != language_asm)
+  if (cust != NULL && cust->language () != language_asm)
     ecs->stop_func_start
       = gdbarch_skip_prologue_noexcept (gdbarch, ecs->stop_func_start);
 
