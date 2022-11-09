@@ -156,6 +156,7 @@ if test "${enable_sim}" != no; then
     SIM_AC_TOOLCHAIN_FOR_TARGET(example-synacor)
     SIM_BUILD_TARGET([example-synacor])
   fi
+  AM_CONDITIONAL([SIM_ENABLE_ARCH_examples], [test "${enable_example_sims}" = "yes"])
 fi
 AM_CONDITIONAL([SIM_ENABLE_IGEN], [test "$sim_igen" = "yes"])
 AM_CONDITIONAL([ENABLE_SIM], [test -n "$SIM_SUBDIRS"])
@@ -197,6 +198,11 @@ AC_SUBST(sim_float)
 dnl Some arches have unique configure flags.
 m4_include([frv/acinclude.m4])
 m4_include([rx/acinclude.m4])
+
+dnl Hack to output an "include" statement in the Makefile so automake doesn't
+dnl try to follow it itself while processing Makefile.am.
+include_makefile="include"
+AC_SUBST(include_makefile)
 
 AC_CONFIG_FILES([arch-subdir.mk Makefile .gdbinit:gdbinit.in])
 AC_OUTPUT

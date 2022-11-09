@@ -1095,6 +1095,13 @@ static const arch_entry cpu_arch[] =
   SUBARCH (uintr, UINTR, ANY_UINTR, false),
   SUBARCH (hreset, HRESET, ANY_HRESET, false),
   SUBARCH (avx512_fp16, AVX512_FP16, ANY_AVX512_FP16, false),
+  SUBARCH (prefetchi, PREFETCHI, PREFETCHI, false),
+  SUBARCH (avx_ifma, AVX_IFMA, ANY_AVX_IFMA, false),
+  SUBARCH (avx_vnni_int8, AVX_VNNI_INT8, ANY_AVX_VNNI_INT8, false),
+  SUBARCH (cmpccxadd, CMPCCXADD, ANY_CMPCCXADD, false),
+  SUBARCH (wrmsrns, WRMSRNS, ANY_WRMSRNS, false),
+  SUBARCH (msrlist, MSRLIST, ANY_MSRLIST, false),
+  SUBARCH (avx_ne_convert, AVX_NE_CONVERT, ANY_AVX_NE_CONVERT, false),
 };
 
 #undef SUBARCH
@@ -1615,6 +1622,10 @@ cpu_flags_all_zero (const union i386_cpu_flags *x)
 {
   switch (ARRAY_SIZE(x->array))
     {
+    case 5:
+      if (x->array[4])
+	return 0;
+      /* Fall through.  */
     case 4:
       if (x->array[3])
 	return 0;
@@ -1640,6 +1651,10 @@ cpu_flags_equal (const union i386_cpu_flags *x,
 {
   switch (ARRAY_SIZE(x->array))
     {
+    case 5:
+      if (x->array[4] != y->array[4])
+	return 0;
+      /* Fall through.  */
     case 4:
       if (x->array[3] != y->array[3])
 	return 0;
@@ -1672,6 +1687,9 @@ cpu_flags_and (i386_cpu_flags x, i386_cpu_flags y)
 {
   switch (ARRAY_SIZE (x.array))
     {
+    case 5:
+      x.array [4] &= y.array [4];
+      /* Fall through.  */
     case 4:
       x.array [3] &= y.array [3];
       /* Fall through.  */
@@ -1695,6 +1713,9 @@ cpu_flags_or (i386_cpu_flags x, i386_cpu_flags y)
 {
   switch (ARRAY_SIZE (x.array))
     {
+    case 5:
+      x.array [4] |= y.array [4];
+      /* Fall through.  */
     case 4:
       x.array [3] |= y.array [3];
       /* Fall through.  */
@@ -1718,6 +1739,9 @@ cpu_flags_and_not (i386_cpu_flags x, i386_cpu_flags y)
 {
   switch (ARRAY_SIZE (x.array))
     {
+    case 5:
+      x.array [4] &= ~y.array [4];
+      /* Fall through.  */
     case 4:
       x.array [3] &= ~y.array [3];
       /* Fall through.  */
@@ -1906,14 +1930,10 @@ operand_type_xor (i386_operand_type x, i386_operand_type y)
 
 static const i386_operand_type disp16_32 = OPERAND_TYPE_DISP16_32;
 static const i386_operand_type anydisp = OPERAND_TYPE_ANYDISP;
-static const i386_operand_type anyimm = OPERAND_TYPE_ANYIMM;
 static const i386_operand_type regxmm = OPERAND_TYPE_REGXMM;
-static const i386_operand_type imm8 = OPERAND_TYPE_IMM8;
-static const i386_operand_type imm8s = OPERAND_TYPE_IMM8S;
 static const i386_operand_type imm16 = OPERAND_TYPE_IMM16;
 static const i386_operand_type imm32 = OPERAND_TYPE_IMM32;
 static const i386_operand_type imm32s = OPERAND_TYPE_IMM32S;
-static const i386_operand_type imm64 = OPERAND_TYPE_IMM64;
 static const i386_operand_type imm16_32 = OPERAND_TYPE_IMM16_32;
 static const i386_operand_type imm16_32s = OPERAND_TYPE_IMM16_32S;
 static const i386_operand_type imm16_32_32s = OPERAND_TYPE_IMM16_32_32S;
@@ -3976,7 +3996,7 @@ process_immext (void)
 
   exp = &im_expressions[i.imm_operands++];
   i.op[i.operands].imms = exp;
-  i.types[i.operands] = imm8;
+  i.types[i.operands].bitfield.imm8 = 1;
   i.operands++;
   exp->X_op = O_constant;
   exp->X_add_number = i.tm.extension_opcode;
@@ -4496,9 +4516,8 @@ load_insn_p (void)
 
   if (!any_vex_p)
     {
-      /* Anysize insns: lea, invlpg, clflush, prefetchnta, prefetcht0,
-	 prefetcht1, prefetcht2, prefetchtw, bndmk, bndcl, bndcu, bndcn,
-	 bndstx, bndldx, prefetchwt1, clflushopt, clwb, cldemote.  */
+      /* Anysize insns: lea, invlpg, clflush, prefetch*, bndmk, bndcl, bndcu,
+	 bndcn, bndstx, bndldx, clflushopt, clwb, cldemote.  */
       if (i.tm.opcode_modifier.anysize)
 	return 0;
 
@@ -5032,6 +5051,11 @@ md_assemble (char *line)
 
   if (!process_suffix ())
     return;
+
+  /* Check if IP-relative addressing requirements can be satisfied.  */
+  if (i.tm.cpu_flags.bitfield.cpuprefetchi
+      && !(i.base_reg && i.base_reg->reg_num == RegIP))
+    as_warn (_("'%s' only supports RIP-relative address"), i.tm.name);
 
   /* Update operand types and check extended states.  */
   for (j = 0; j < i.operands; j++)
@@ -5812,13 +5836,6 @@ optimize_imm (void)
 	      const insn_template *t = current_templates->start;
 
 	      operand_type_set (&mask, 0);
-	      allowed = t->operand_types[op];
-
-	      while (++t < current_templates->end)
-		{
-		  allowed = operand_type_and (allowed, anyimm);
-		  allowed = operand_type_or (allowed, t->operand_types[op]);
-		}
 	      switch (guess_suffix)
 		{
 		case QWORD_MNEM_SUFFIX:
@@ -5837,7 +5854,14 @@ optimize_imm (void)
 		default:
 		  break;
 		}
-	      allowed = operand_type_and (mask, allowed);
+
+	      allowed = operand_type_and (t->operand_types[op], mask);
+	      while (++t < current_templates->end)
+		{
+		  allowed = operand_type_or (allowed, t->operand_types[op]);
+		  allowed = operand_type_and (allowed, mask);
+		}
+
 	      if (!operand_type_all_zero (&allowed))
 		i.types[op] = operand_type_and (i.types[op], mask);
 	    }
@@ -7648,18 +7672,12 @@ static int
 update_imm (unsigned int j)
 {
   i386_operand_type overlap = i.types[j];
-  if ((overlap.bitfield.imm8
-       || overlap.bitfield.imm8s
-       || overlap.bitfield.imm16
-       || overlap.bitfield.imm32
-       || overlap.bitfield.imm32s
-       || overlap.bitfield.imm64)
-      && !operand_type_equal (&overlap, &imm8)
-      && !operand_type_equal (&overlap, &imm8s)
-      && !operand_type_equal (&overlap, &imm16)
-      && !operand_type_equal (&overlap, &imm32)
-      && !operand_type_equal (&overlap, &imm32s)
-      && !operand_type_equal (&overlap, &imm64))
+  if (overlap.bitfield.imm8
+      + overlap.bitfield.imm8s
+      + overlap.bitfield.imm16
+      + overlap.bitfield.imm32
+      + overlap.bitfield.imm32s
+      + overlap.bitfield.imm64 > 1)
     {
       if (i.suffix)
 	{
@@ -7696,12 +7714,12 @@ update_imm (unsigned int j)
       else if (i.prefix[DATA_PREFIX])
 	overlap = operand_type_and (overlap,
 				    flag_code != CODE_16BIT ? imm16 : imm32);
-      if (!operand_type_equal (&overlap, &imm8)
-	  && !operand_type_equal (&overlap, &imm8s)
-	  && !operand_type_equal (&overlap, &imm16)
-	  && !operand_type_equal (&overlap, &imm32)
-	  && !operand_type_equal (&overlap, &imm32s)
-	  && !operand_type_equal (&overlap, &imm64))
+      if (overlap.bitfield.imm8
+	  + overlap.bitfield.imm8s
+	  + overlap.bitfield.imm16
+	  + overlap.bitfield.imm32
+	  + overlap.bitfield.imm32s
+	  + overlap.bitfield.imm64 != 1)
 	{
 	  as_bad (_("no instruction mnemonic suffix given; "
 		    "can't determine immediate size"));
@@ -8060,7 +8078,7 @@ build_modrm_byte (void)
 	     immediate operand to encode the first operand.  */
 	  exp = &im_expressions[i.imm_operands++];
 	  i.op[i.operands].imms = exp;
-	  i.types[i.operands] = imm8;
+	  i.types[i.operands].bitfield.imm8 = 1;
 	  i.operands++;
 
 	  gas_assert (i.tm.operand_types[reg_slot].bitfield.class == RegSIMD);
@@ -8543,7 +8561,7 @@ build_modrm_byte (void)
 		 source operand is encoded in VEX prefix. */
 	      gas_assert (mem != (unsigned int) ~0);
 
-	      if (op > mem)
+	      if (op > mem || i.tm.cpu_flags.bitfield.cpucmpccxadd)
 		{
 		  vex_reg = op++;
 		  gas_assert (op < i.operands);
