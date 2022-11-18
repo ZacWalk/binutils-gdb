@@ -8290,22 +8290,13 @@ md_estimate_size_before_relax (fragS * fragp, segT segtype ATTRIBUTE_UNUSED)
   return 4;
 }
 
-/* Round up a COFF section size not needed for ELF */
-#ifdef OBJ_COFF
-valueT
-md_section_align (segT segment, valueT size)
-{
-  int align = bfd_section_alignment (segment);
-  valueT mask = ((valueT) 1 << align) - 1;
-  return (size + mask) & ~mask;
-}
-#else /* !OBJ_COFF */
+/* Round up a section size to the appropriate boundary.	 */
+
 valueT
 md_section_align (segT segment ATTRIBUTE_UNUSED, valueT size)
 {
   return size;
 }
-#endif /* !OBJ_COFF */
 
 /* This is called from HANDLE_ALIGN in write.c.	 Fill in the contents
    of an rs_align_code fragment.
@@ -8362,11 +8353,7 @@ aarch64_handle_align (fragS * fragP)
 
   if (noop_size)
     memcpy (p, aarch64_noop, noop_size);
-
-/* COFF sections may have unaligned fr_var and then be aligned in md_section_align */
-#ifndef OBJ_COFF
   fragP->fr_var = noop_size;
-#endif
 }
 
 /* Perform target specific initialisation of a frag.
