@@ -3642,8 +3642,15 @@ The debugger convenience variables @samp{$_thread} and
 @samp{$_gthread} contain, respectively, the per-inferior thread number
 and the global thread number of the current thread.  You may find this
 useful in writing breakpoint conditional expressions, command scripts,
-and so forth.  @xref{Convenience Vars,, Convenience Variables}, for
-general information on convenience variables.
+and so forth.  The convenience variable @samp{$_inferior_thread_count}
+contains the number of live threads in the current inferior.
+@xref{Convenience Vars,, Convenience Variables}, for general
+information on convenience variables.
+
+When running in non-stop mode (@pxref{Non-Stop Mode}), where new
+threads can be created, and existing threads exit, at any time,
+@samp{$_inferior_thread_count} could return a different value each
+time it is evaluated.
 
 If @value{GDBN} detects the program is multi-threaded, it augments the
 usual message about stopping at a breakpoint with the ID and name of
@@ -12655,6 +12662,9 @@ The thread number of the current thread.  @xref{thread numbers}.
 @item $_gthread
 The global number of the current thread.  @xref{global thread numbers}.
 
+@item $_inferior_thread_count
+The number of live threads in the current inferior.  @xref{Threads}.
+
 @item $_gdb_major
 @itemx $_gdb_minor
 @vindex $_gdb_major@r{, convenience variable}
@@ -18858,7 +18868,7 @@ terminated themselves.
 @item Child Activation Wait
 The task is waiting for created tasks to complete activation.
 
-@item Accept Statement
+@item Accept or Select Term
 The task is waiting on an accept or selective wait statement.
 
 @item Waiting on entry call
@@ -18881,8 +18891,20 @@ waiting on a terminate Phase.
 The task is sleeping waiting for tasks on terminate alternatives to
 finish terminating.
 
+@item Asynchronous Hold
+The task has been held by @code{Ada.Asynchronous_Task_Control.Hold_Task}.
+
+@item Activating
+The task has been created and is being made runnable.
+
+@item Selective Wait
+The task is waiting in a selective wait statement.
+
 @item Accepting RV with @var{taskno}
 The task is accepting a rendez-vous with the task @var{taskno}.
+
+@item Waiting on RV with @var{taskno}
+The task is waiting for a rendez-vous with the task @var{taskno}.
 @end table
 
 @item Name
@@ -26602,6 +26624,15 @@ then it will be used.
 @item show style sources
 Show the current state of source code styling.
 
+@item set style tui-current-position @samp{on|off}
+Enable or disable styling of the source and assembly code highlighted
+by the TUI's current position indicator.  The default is @samp{off}.
+@xref{TUI, ,@value{GDBN} Text User Interface}.
+
+@item show style tui-current-position
+Show whether the source and assembly code highlighted by the TUI's
+current position indicator is styled.
+
 @anchor{style_disassembler_enabled}
 @item set style disassembler enabled @samp{on|off}
 Enable or disable disassembler styling.  This affects whether
@@ -29163,8 +29194,12 @@ This window shows the processor registers.  Registers are highlighted
 when their values change.
 @end table
 
-The source and assembly windows show the current program position
-by highlighting the current line and marking it with a @samp{>} marker.
+The source and assembly windows show the current program position by
+highlighting the current line and marking it with a @samp{>} marker.
+By default, source and assembly code styling is disabled for the
+highlighted text, but you can enable it with the @code{set style
+tui-current-position on} command.  @xref{Output Styling}.
+
 Breakpoints are indicated with two markers.  The first marker
 indicates the breakpoint type:
 
