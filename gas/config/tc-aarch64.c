@@ -30,6 +30,9 @@
 
 #ifdef OBJ_ELF
 #include "elf/aarch64.h"
+#include "dw2gencfi.h"
+#include "sframe.h"
+#include "gen-sframe.h"
 #endif
 
 #include "dw2gencfi.h"
@@ -71,6 +74,11 @@ enum aarch64_abi_type
   AARCH64_ABI_ILP32 = 2,
   AARCH64_ABI_LLP64 = 3
 };
+
+unsigned int aarch64_sframe_cfa_sp_reg;
+/* The other CFA base register for SFrame unwind info.  */
+unsigned int aarch64_sframe_cfa_fp_reg;
+unsigned int aarch64_sframe_cfa_ra_reg;
 
 #ifndef DEFAULT_ARCH
 #define DEFAULT_ARCH "aarch64"
@@ -2116,6 +2124,8 @@ const pseudo_typeS md_pseudo_table[] = {
   {"xword", s_aarch64_elf_cons, 8},
   {"dword", s_aarch64_elf_cons, 8},
   {"variant_pcs", s_variant_pcs, 0},
+#else
+  { "word", cons, 4},
 #endif
   {"float16", float_cons, 'h'},
   {"bfloat16", float_cons, 'b'},
@@ -6636,6 +6646,8 @@ parse_operands (char *str, const aarch64_opcode *opcode)
 	case AARCH64_OPND_SVE_IMM_ROT1:
 	case AARCH64_OPND_SVE_IMM_ROT2:
 	case AARCH64_OPND_SVE_IMM_ROT3:
+	case AARCH64_OPND_CSSC_SIMM8:
+	case AARCH64_OPND_CSSC_UIMM8:
 	  po_imm_nc_or_fail ();
 	  info->imm.value = val;
 	  break;
@@ -8290,22 +8302,13 @@ md_estimate_size_before_relax (fragS * fragp, segT segtype ATTRIBUTE_UNUSED)
   return 4;
 }
 
-/* Round up a COFF section size not needed for ELF */
-#ifdef OBJ_COFF
-valueT
-md_section_align (segT segment, valueT size)
-{
-  int align = bfd_section_alignment (segment);
-  valueT mask = ((valueT) 1 << align) - 1;
-  return (size + mask) & ~mask;
-}
-#else /* !OBJ_COFF */
+/* Round up a section size to the appropriate boundary.	 */
+
 valueT
 md_section_align (segT segment ATTRIBUTE_UNUSED, valueT size)
 {
   return size;
 }
-#endif /* !OBJ_COFF */
 
 /* This is called from HANDLE_ALIGN in write.c.	 Fill in the contents
    of an rs_align_code fragment.
@@ -8362,11 +8365,7 @@ aarch64_handle_align (fragS * fragP)
 
   if (noop_size)
     memcpy (p, aarch64_noop, noop_size);
-
-/* COFF sections may have unaligned fr_var and then be aligned in md_section_align */
-#ifndef OBJ_COFF
   fragP->fr_var = noop_size;
-#endif
 }
 
 /* Perform target specific initialisation of a frag.
@@ -8414,6 +8413,50 @@ aarch64_init_frag (fragS * fragP, int max_chars)
       break;
     }
 }
+
+/* Whether SFrame unwind info is supported.  */
+
+bool
+aarch64_support_sframe_p (void)
+{
+  /* At this time, SFrame is supported for aarch64 only.  */
+  return (aarch64_abi == AARCH64_ABI_LP64);
+}
+
+/* Specify if RA tracking is needed.  */
+
+bool
+aarch64_sframe_ra_tracking_p (void)
+{
+  return true;
+}
+
+/* Specify the fixed offset to recover RA from CFA.
+   (useful only when RA tracking is not needed).  */
+
+offsetT
+aarch64_sframe_cfa_ra_offset (void)
+{
+  return (offsetT) SFRAME_CFA_FIXED_RA_INVALID;
+}
+
+/* Get the abi/arch indentifier for SFrame.  */
+
+unsigned char
+aarch64_sframe_get_abi_arch (void)
+{
+  unsigned char sframe_abi_arch = 0;
+
+  if (aarch64_support_sframe_p ())
+    {
+      sframe_abi_arch = target_big_endian
+	? SFRAME_ABI_AARCH64_ENDIAN_BIG
+	: SFRAME_ABI_AARCH64_ENDIAN_LITTLE;
+    }
+
+  return sframe_abi_arch;
+}
+
 #endif /* OBJ_ELF */
 
 /* Initialize the DWARF-2 unwind information for this procedure.  */
@@ -9699,6 +9742,12 @@ md_begin (void)
     mach = bfd_mach_aarch64;
 
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, mach);
+#ifdef OBJ_ELF
+  /* FIXME - is there a better way to do it ?  */
+  aarch64_sframe_cfa_sp_reg = 31;
+  aarch64_sframe_cfa_fp_reg = 29; /* x29.  */
+  aarch64_sframe_cfa_ra_reg = 30;
+#endif
 }
 
 /* Command line processing.  */
@@ -10053,6 +10102,8 @@ static const struct aarch64_option_cpu_value_table aarch64_features[] = {
   {"mops",		AARCH64_FEATURE (AARCH64_FEATURE_MOPS, 0),
 			AARCH64_ARCH_NONE},
   {"hbc",		AARCH64_FEATURE (AARCH64_FEATURE_HBC, 0),
+			AARCH64_ARCH_NONE},
+  {"cssc",		AARCH64_FEATURE (AARCH64_FEATURE_CSSC, 0),
 			AARCH64_ARCH_NONE},
   {NULL,		AARCH64_ARCH_NONE, AARCH64_ARCH_NONE},
 };

@@ -730,16 +730,16 @@ extract_pcrel (uint64_t insn,
   return pcrel;
 }
 
-/* Variant of extract_pcrel that sets invalid for R bit set.  The idea
-   is to disassemble "paddi rt,0,offset,1" as "pla rt,offset".  */
+/* Variant of extract_pcrel that sets invalid for R bit clear.  Used
+   to disassemble "paddi rt,0,offset,1" as "pla rt,offset".  */
 
 static int64_t
-extract_pcrel0 (uint64_t insn,
+extract_pcrel1 (uint64_t insn,
 		ppc_cpu_t dialect,
 		int *invalid)
 {
   int64_t pcrel = extract_pcrel (insn, dialect, invalid);
-  if (pcrel)
+  if (!pcrel)
     *invalid = 1;
   return pcrel;
 }
@@ -2332,7 +2332,7 @@ extract_xc6 (uint64_t insn,
   return ((insn << 2) & 0x20) | ((insn >> 6) & 0x1f);
 }
 
-/* The split XTp field in a vector paired insn.  */
+/* The split XTp and XSp field in a vector paired insn.  */
 
 static uint64_t
 insert_xtp (uint64_t insn,
@@ -3344,13 +3344,13 @@ const struct powerpc_operand powerpc_operands[] =
 #define PCREL_MASK (1ULL << 52)
   { 0x1, 52, insert_pcrel, extract_pcrel, PPC_OPERAND_OPTIONAL },
 
-#define PCREL0 PCREL + 1
-  { 0x1, 52, insert_pcrel, extract_pcrel0, PPC_OPERAND_OPTIONAL },
+#define PCREL1 PCREL + 1
+  { 0x1, 52, insert_pcrel, extract_pcrel1, PPC_OPERAND_OPTIONAL },
 
   /* The RA field in a D or X form instruction which is an updating
      load, which means that the RA field may not be zero and may not
      equal the RT field.  */
-#define RAL PCREL0 + 1
+#define RAL PCREL1 + 1
   { 0x1f, 16, insert_ral, extract_ral, PPC_OPERAND_GPR_0 },
 
   /* The RA field in an lmw instruction, which has special value
@@ -3822,8 +3822,9 @@ const struct powerpc_operand powerpc_operands[] =
 #define XTQ6 XSQ6
   { 0x3f, PPC_OPSHIFT_INV, insert_xtq6, extract_xtq6, PPC_OPERAND_VSR },
 
-  /* The split XTp field in a vector paired instruction.  */
+  /* The split XTp and XSp field in a vector paired instruction.  */
 #define XTP XSQ6 + 1
+#define XSP XTP
   { 0x3e, PPC_OPSHIFT_INV, insert_xtp, extract_xtp, PPC_OPERAND_VSR },
 
 #define XTS XTP + 1
@@ -6024,7 +6025,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"dcbz_l",	X  (4,1014),	XRT_MASK,    PPCPS,	0,		{RA, RB}},
 
 {"lxvp",	DQXP(6,0),	DQXP_MASK,   POWER10,	PPCVLE,		{XTP, DQ, RA0}},
-{"stxvp",	DQXP(6,1),	DQXP_MASK,   POWER10,	PPCVLE,		{XTP, DQ, RA0}},
+{"stxvp",	DQXP(6,1),	DQXP_MASK,   POWER10,	PPCVLE,		{XSP, DQ, RA0}},
 
 {"mulli",	OP(7),		OP_MASK,     PPCCOM,	PPCVLE,		{RT, RA, SI}},
 {"muli",	OP(7),		OP_MASK,     PWRCOM,	PPCVLE,		{RT, RA, SI}},
@@ -8080,7 +8081,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"divwu",	XO(31,459,0,0),	XO_MASK,     PPC,	0,		{RT, RA, RB}},
 {"divwu.",	XO(31,459,0,1),	XO_MASK,     PPC,	0,		{RT, RA, RB}},
 
-{"stxvpx",	X(31,461),	XX1_MASK,    POWER10,	0,		{XTP, RA0, RB}},
+{"stxvpx",	X(31,461),	XX1_MASK,    POWER10,	0,		{XSP, RA0, RB}},
 
 {"mtpmr",	X(31,462),	X_MASK, PPCPMR|PPCE300, 0,		{PMR, RS}},
 {"mttmr",	X(31,494),	X_MASK,	     PPCTMR,	0,		{TMR, RS}},
@@ -9748,9 +9749,9 @@ const unsigned int powerpc_num_opcodes = ARRAY_SIZE (powerpc_opcodes);
 const struct powerpc_opcode prefix_opcodes[] = {
 {"pnop",	  PMRR,		       PREFIX_MASK,	POWER10, 0,	{0}},
 {"pli",		  PMLS|OP(14),	       P_DRAPCREL_MASK,	POWER10, EXT,	{RT, SI34}},
-{"paddi",	  PMLS|OP(14),	       P_D_MASK,	POWER10, 0,	{RT, RA0, SI34, PCREL0}},
-{"psubi",	  PMLS|OP(14),	       P_D_MASK,	POWER10, EXT,	{RT, RA0, NSI34, PCREL0}},
-{"pla",		  PMLS|OP(14),	       P_D_MASK,	POWER10, EXT,	{RT, D34, PRA0, PCREL}},
+{"pla",		  PMLS|OP(14),	       P_D_MASK,	POWER10, EXT,	{RT, D34, PRA0, PCREL1}},
+{"paddi",	  PMLS|OP(14),	       P_D_MASK,	POWER10, 0,	{RT, RA0, SI34, PCREL}},
+{"psubi",	  PMLS|OP(14),	       P_D_MASK,	POWER10, EXT,	{RT, RA0, NSI34, PCREL}},
 {"xxsplti32dx",	  P8RR|VSOP(32,0),     P_VSI_MASK,	POWER10, 0,	{XTS, IX, IMM32}},
 {"xxspltidp",	  P8RR|VSOP(32,2),     P_VS_MASK,	POWER10, 0,	{XTS, IMM32}},
 {"xxspltiw",	  P8RR|VSOP(32,3),     P_VS_MASK,	POWER10, 0,	{XTS, IMM32}},
@@ -9854,7 +9855,7 @@ const struct powerpc_opcode prefix_opcodes[] = {
 {"pmxvf64gernn",  PMMIRR|XX3(59,250),  P_GER64_MASK,	POWER10, 0,	{ACC, XA6ap, XB6a, XMSK, YMSK2}},
 {"pstq",	  P8LS|OP(60),	       P_D_MASK,	POWER10, 0,	{RSQ, D34, PRA0, PCREL}},
 {"pstd",	  P8LS|OP(61),	       P_D_MASK,	POWER10, 0,	{RS, D34, PRA0, PCREL}},
-{"pstxvp",	  P8LS|OP(62),	       P_D_MASK,	POWER10, 0,	{XTP, D34, PRA0, PCREL}},
+{"pstxvp",	  P8LS|OP(62),	       P_D_MASK,	POWER10, 0,	{XSP, D34, PRA0, PCREL}},
 };
 
 const unsigned int prefix_num_opcodes = ARRAY_SIZE (prefix_opcodes);

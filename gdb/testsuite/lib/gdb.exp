@@ -548,6 +548,7 @@ proc gdb_start_cmd { {inferior_args {}} } {
 	-notransfer -re "Starting program: \[^\r\n\]*" {
 	    return 0
 	}
+	-re "$gdb_prompt $" { }
     }
     return -1
 }
@@ -5869,30 +5870,40 @@ proc gdb_remote_download {dest fromfile {tofile {}}} {
     }
 }
 
-# gdb_load_shlib LIB...
-#
-# Copy the listed library to the target.
+# Copy shlib FILE to the target.
 
-proc gdb_load_shlib { file } {
+proc gdb_download_shlib { file } {
+    return [gdb_remote_download target [shlib_target_file $file]]
+}
+
+# Set solib-search-path to allow gdb to locate shlib FILE.
+
+proc gdb_locate_shlib { file } {
     global gdb_spawn_id
 
     if ![info exists gdb_spawn_id] {
 	perror "gdb_load_shlib: GDB is not running"
     }
 
-    set dest [gdb_remote_download target [shlib_target_file $file]]
-
-    if {[is_remote target]} {
-	# If the target is remote, we need to tell gdb where to find the
-	# libraries.
-	#
-	# We could set this even when not testing remotely, but a user
-	# generally won't set it unless necessary.  In order to make the tests
-	# more like the real-life scenarios, we don't set it for local testing.
-	gdb_test "set solib-search-path [file dirname $file]" "" \
-	    "set solib-search-path for [file tail $file]"
+    # If the target is remote, we need to tell gdb where to find the
+    # libraries.
+    if { ![is_remote target] } {
+	return
     }
 
+    # We could set this even when not testing remotely, but a user
+    # generally won't set it unless necessary.  In order to make the tests
+    # more like the real-life scenarios, we don't set it for local testing.
+    gdb_test "set solib-search-path [file dirname $file]" "" \
+	"set solib-search-path for [file tail $file]"
+}
+
+# Copy shlib FILE to the target and set solib-search-path to allow gdb to
+# locate it.
+
+proc gdb_load_shlib { file } {
+    set dest [gdb_download_shlib $file]
+    gdb_locate_shlib $file
     return $dest
 }
 
@@ -5910,34 +5921,49 @@ proc gdb_load { arg } {
 }
 
 #
-# with_complaints -- Execute BODY and set complaints temporary to N for the
+# with_set -- Execute BODY and set VAR temporary to VAL for the
 # duration.
 #
-proc with_complaints { n body } {
-    global decimal
-
-    # Save current setting of complaints.
+proc with_set { var val body } {
     set save ""
-    set show_complaints_re \
-	"Max number of complaints about incorrect symbols is ($decimal)\\."
-    gdb_test_multiple "show complaints" "" {
-	-re -wrap $show_complaints_re {
+    set show_re \
+	"is (\[^\r\n\]+)\\."
+    gdb_test_multiple "show $var" "" {
+	-re -wrap $show_re {
 	    set save $expect_out(1,string)
 	}
     }
 
+    # Handle 'set to "auto" (currently "i386")'.
+    set save [regsub {^set to} $save ""]
+    set save [regsub {\([^\r\n]+\)$} $save ""]
+    set save [string trim $save]
+    set save [regsub -all {^"|"$} $save ""]
+
     if { $save == "" } {
-	perror "Did not manage to set complaints"
+	perror "Did not manage to set $var"
     } else {
-	# Set complaints.
-	gdb_test_no_output -nopass "set complaints $n"
+	# Set var.
+	set cmd "set $var $val"
+	gdb_test_multiple $cmd "" {
+	    -re -wrap "^$cmd" {
+	    }
+	    -re -wrap " is set to \"?$val\"?\\." {
+	    }
+	}
     }
 
     set code [catch {uplevel 1 $body} result]
 
-    # Restore saved setting of complaints.
+    # Restore saved setting.
     if { $save != "" } {
-	gdb_test_no_output -nopass "set complaints $save"
+	set cmd "set $var $save"
+	gdb_test_multiple $cmd "" {
+	    -re -wrap "^$cmd" {
+	    }
+	    -re -wrap "is set to \"?$save\"?( \\(\[^)\]*\\))?\\." {
+	    }
+	}
     }
 
     if {$code == 1} {
@@ -5946,6 +5972,14 @@ proc with_complaints { n body } {
     } else {
 	return -code $code $result
     }
+}
+
+#
+# with_complaints -- Execute BODY and set complaints temporary to N for the
+# duration.
+#
+proc with_complaints { n body } {
+    return [uplevel [list with_set complaints $n $body]]
 }
 
 #
@@ -7736,7 +7770,8 @@ proc find_core_file {pid} {
     } elseif {$pid != -1} {
 	lappend files core.$pid
     }
-    lappend files [list ${::testfile}.core core]
+    lappend files ${::testfile}.core
+    lappend files core
 
     foreach file $files {
 	if {![is_remote host]} {
@@ -8796,6 +8831,14 @@ gdb_caching_proc have_fuse_ld_gold {
     return [gdb_simple_compile $me $src executable $flags]
 }
 
+# Return 1 if compiler supports fvar-tracking, otherwise return 0.
+gdb_caching_proc have_fvar_tracking {
+    set me "have_fvar_tracking"
+    set flags "additional_flags=-fvar-tracking"
+    set src { int main() { return 0; } }
+    return [gdb_simple_compile $me $src executable $flags]
+}
+
 # Return 1 if linker supports -Ttext-segment, otherwise return 0.
 gdb_caching_proc linker_supports_Ttext_segment_flag {
     set me "linker_supports_Ttext_segment_flag"
@@ -9044,8 +9087,14 @@ gdb_caching_proc has_hw_wp_support {
     # support for HW watchpoints.
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set compile_flags {debug nowarnings quiet}
     set me "has_hw_wp_support"
+
+    global gdb_spawn_id
+    if { [info exists gdb_spawn_id] } {
+	error "$me called with running gdb instance"
+    }
+
+    set compile_flags {debug nowarnings quiet}
 
     # Compile a test program to test if HW watchpoints are supported
     set src {
@@ -9062,12 +9111,14 @@ gdb_caching_proc has_hw_wp_support {
         return 0
     }
 
-    gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
     gdb_load "$obj"
 
     if ![runto_main] {
+	gdb_exit
+	remote_file build delete $obj
+
 	set has_hw_wp_support 0
 	return $has_hw_wp_support
     }
@@ -9095,23 +9146,41 @@ gdb_caching_proc has_hw_wp_support {
     return $has_hw_wp_support
 }
 
-# Return a list of all the accepted values of the set command SET_CMD.
+# Return a list of all the accepted values of the set command
+# "SET_CMD SET_ARG".
+# For example get_set_option_choices "set architecture" "i386".
 
-proc get_set_option_choices {set_cmd} {
-    global gdb_prompt
-
+proc get_set_option_choices { set_cmd {set_arg ""} } {
     set values {}
 
-    set test "complete $set_cmd"
-    gdb_test_multiple "complete $set_cmd " "$test" {
-	-re "$set_cmd (\[^\r\n\]+)\r\n" {
-	    lappend values $expect_out(1,string)
-	    exp_continue
-	}
-	-re "$gdb_prompt " {
-	    pass $test
+    if { $set_arg == "" } {
+	# Add trailing space to signal that we need completion of the choices,
+	# not of set_cmd itself.
+	set cmd "complete $set_cmd "
+    } else {
+	set cmd "complete $set_cmd $set_arg"
+    }
+
+    # Set test name without trailing space.
+    set test [string trim $cmd]
+
+    with_set max-completions unlimited {
+	gdb_test_multiple $cmd $test {
+	    -re "^[string_to_regexp $cmd]\r\n" {
+		exp_continue
+	    }
+
+	    -re "^$set_cmd (\[^\r\n\]+)\r\n" {
+		lappend values $expect_out(1,string)
+		exp_continue
+	    }
+
+	    -re "^$::gdb_prompt $" {
+		pass $gdb_test_name
+	    }
 	}
     }
+
     return $values
 }
 
@@ -9230,6 +9299,28 @@ gdb_caching_proc have_epilogue_line_info {
 	    return False
 	}
     }
+}
+
+# Decompress file BZ2, and return it.
+
+proc decompress_bz2 { bz2 } {
+    set copy [standard_output_file [file tail $bz2]]
+    set copy [remote_download build $bz2 $copy]
+    if { $copy == "" } {
+	return $copy
+    }
+
+    set res [remote_exec build "bzip2" "-df $copy"]
+    if { [lindex $res 0] == -1 } {
+	return ""
+    }
+
+    set copy [regsub {.bz2$} $copy ""]
+    if { ![remote_file build exists $copy] } {
+	return ""
+    }
+
+    return $copy
 }
 
 # Always load compatibility stuff.

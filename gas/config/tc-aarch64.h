@@ -191,7 +191,10 @@ struct aarch64_frag_type
       goto LABEL;								\
     }
 
+/* COFF sub section alignment calculated using the write.c implementation.  */
+#ifndef OBJ_COFF
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
+#endif
 
 #define DWARF2_LINE_MIN_INSN_LENGTH 	4
 
@@ -246,18 +249,50 @@ struct aarch64_segment_info_type
 extern void aarch64_after_parse_args (void);
 #define md_after_parse_args() aarch64_after_parse_args ()
 
-#else /* Not OBJ_ELF.  */
-#define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
-#endif
-
-#if defined OBJ_ELF || defined OBJ_COFF
-
 # define EXTERN_FORCE_RELOC 			1
 # define tc_fix_adjustable(FIX) 		1
+
 /* Values passed to md_apply_fix don't include the symbol value.  */
 # define MD_APPLY_SYM_VALUE(FIX) 		0
 
-#endif
+#else /* Neither OBJ_ELF nor OBJ_COFF.  */
+
+#define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
+
+#endif /*  OBJ_ELF || OBJ_COFF.  */
+
+#ifdef OBJ_ELF
+
+/* Whether SFrame unwind info is supported.  */
+extern bool aarch64_support_sframe_p (void);
+#define support_sframe_p aarch64_support_sframe_p
+
+/* The stack-pointer register number for SFrame unwind info.  */
+extern unsigned int aarch64_sframe_cfa_sp_reg;
+#define SFRAME_CFA_SP_REG aarch64_sframe_cfa_sp_reg
+
+/* The base-pointer register number for CFA unwind info.  */
+extern unsigned int aarch64_sframe_cfa_fp_reg;
+#define SFRAME_CFA_FP_REG aarch64_sframe_cfa_fp_reg
+
+/* The return address register number for CFA unwind info.  */
+extern unsigned int aarch64_sframe_cfa_ra_reg;
+#define SFRAME_CFA_RA_REG aarch64_sframe_cfa_ra_reg
+
+/* Specify if RA tracking is needed.  */
+extern bool aarch64_sframe_ra_tracking_p (void);
+#define sframe_ra_tracking_p aarch64_sframe_ra_tracking_p
+
+/* Specify the fixed offset to recover RA from CFA.
+   (useful only when RA tracking is not needed).  */
+extern offsetT aarch64_sframe_cfa_ra_offset (void);
+#define sframe_cfa_ra_offset aarch64_sframe_cfa_ra_offset
+
+/* The abi/arch indentifier for SFrame.  */
+unsigned char aarch64_sframe_get_abi_arch (void);
+#define sframe_get_abi_arch aarch64_sframe_get_abi_arch
+
+#endif /* OBJ_ELF  */
 
 #define MD_PCREL_FROM_SECTION(F,S) md_pcrel_from_section(F,S)
 
