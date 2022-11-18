@@ -30,6 +30,8 @@
 #include "subsegs.h"
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
+#include "gen-sframe.h"
+#include "sframe.h"
 #include "elf/x86-64.h"
 #include "opcodes/i386-init.h"
 #include <limits.h>
@@ -311,6 +313,10 @@ struct _i386_insn
     /* The operand to a branch insn indicates an absolute branch.  */
     bool jumpabsolute;
 
+    /* There is a memory operand of (%dx) which should be only used
+       with input/output instructions.  */
+    bool input_output_operand;
+
     /* Extended states.  */
     enum
       {
@@ -458,6 +464,16 @@ static const struct RC_name RC_NamesTable[] =
   {  saeonly,  STRING_COMMA_LEN ("sae") },
 };
 
+/* To be indexed by segment register number.  */
+static const unsigned char i386_seg_prefixes[] = {
+  ES_PREFIX_OPCODE,
+  CS_PREFIX_OPCODE,
+  SS_PREFIX_OPCODE,
+  DS_PREFIX_OPCODE,
+  FS_PREFIX_OPCODE,
+  GS_PREFIX_OPCODE
+};
+
 /* List of chars besides those in app.c:symbol_chars that can start an
    operand.  Used to prevent the scrubber eating vital white-space.  */
 const char extra_symbol_chars[] = "*%-([{}"
@@ -587,6 +603,12 @@ static int use_big_obj = 0;
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
 /* 1 if generating code for a shared library.  */
 static int shared = 0;
+
+unsigned int x86_sframe_cfa_sp_reg;
+/* The other CFA base register for SFrame unwind info.  */
+unsigned int x86_sframe_cfa_fp_reg;
+unsigned int x86_sframe_cfa_ra_reg;
+
 #endif
 
 /* 1 for intel syntax,
@@ -974,6 +996,7 @@ static const arch_entry cpu_arch[] =
   ARCH (znver1, ZNVER, ZNVER1, false),
   ARCH (znver2, ZNVER, ZNVER2, false),
   ARCH (znver3, ZNVER, ZNVER3, false),
+  ARCH (znver4, ZNVER, ZNVER4, false),
   ARCH (btver1, BT, BTVER1, false),
   ARCH (btver2, BT, BTVER2, false),
 
@@ -1037,7 +1060,6 @@ static const arch_entry cpu_arch[] =
   SUBARCH (padlock, PADLOCK, PADLOCK, false),
   SUBARCH (pacifica, SVME, SVME, true),
   SUBARCH (svme, SVME, SVME, false),
-  SUBARCH (sse4a, SSE4A, SSE4A, false),
   SUBARCH (abm, ABM, ABM, false),
   SUBARCH (bmi, BMI, BMI, false),
   SUBARCH (tbm, TBM, TBM, false),
@@ -1102,6 +1124,8 @@ static const arch_entry cpu_arch[] =
   SUBARCH (wrmsrns, WRMSRNS, ANY_WRMSRNS, false),
   SUBARCH (msrlist, MSRLIST, ANY_MSRLIST, false),
   SUBARCH (avx_ne_convert, AVX_NE_CONVERT, ANY_AVX_NE_CONVERT, false),
+  SUBARCH (rao_int, RAO_INT, ANY_RAO_INT, false),
+  SUBARCH (rmpquery, RMPQUERY, RMPQUERY, false),
 };
 
 #undef SUBARCH
@@ -2071,7 +2095,7 @@ operand_size_match (const insn_template *t)
     {
       if (i.types[j].bitfield.class != Reg
 	  && i.types[j].bitfield.class != RegSIMD
-	  && t->opcode_modifier.anysize)
+	  && t->opcode_modifier.operandconstraint == ANY_SIZE)
 	continue;
 
       if (t->operand_types[j].bitfield.class == Reg
@@ -3093,6 +3117,10 @@ md_begin (void)
       x86_dwarf2_return_column = 16;
 #endif
       x86_cie_data_alignment = -8;
+#if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
+      x86_sframe_cfa_sp_reg = 7;
+      x86_sframe_cfa_fp_reg = 6;
+#endif
     }
   else
     {
@@ -4518,7 +4546,7 @@ load_insn_p (void)
     {
       /* Anysize insns: lea, invlpg, clflush, prefetch*, bndmk, bndcl, bndcu,
 	 bndcn, bndstx, bndldx, clflushopt, clwb, cldemote.  */
-      if (i.tm.opcode_modifier.anysize)
+      if (i.tm.opcode_modifier.operandconstraint == ANY_SIZE)
 	return 0;
 
       /* pop.   */
@@ -4871,9 +4899,10 @@ md_assemble (char *line)
 
   /* All Intel opcodes have reversed operands except for "bound", "enter",
      "invlpg*", "monitor*", "mwait*", "tpause", "umwait", "pvalidate",
-     "rmpadjust", and "rmpupdate".  We also don't reverse intersegment "jmp"
-     and "call" instructions with 2 immediate operands so that the immediate
-     segment precedes the offset consistently in Intel and AT&T modes.  */
+     "rmpadjust", "rmpupdate", and "rmpquery".  We also don't reverse
+     intersegment "jmp" and "call" instructions with 2 immediate operands so
+     that the immediate segment precedes the offset consistently in Intel and
+     AT&T modes.  */
   if (intel_syntax
       && i.operands > 1
       && (strcmp (mnemonic, "bound") != 0)
@@ -4884,7 +4913,8 @@ md_assemble (char *line)
       && !startswith (mnemonic, "rmp")
       && (strcmp (mnemonic, "tpause") != 0)
       && (strcmp (mnemonic, "umwait") != 0)
-      && !(operand_type_check (i.types[0], imm)
+      && !(i.operands == 2
+	   && operand_type_check (i.types[0], imm)
 	   && operand_type_check (i.types[1], imm)))
     swap_operands ();
 
@@ -5043,6 +5073,17 @@ md_assemble (char *line)
       i.disp_operands = 0;
     }
 
+  /* The memory operand of (%dx) should be only used with input/output
+     instructions (base opcodes: 0x6c, 0x6e, 0xec, 0xee).  */
+  if (i.input_output_operand
+      && ((i.tm.base_opcode | 0x82) != 0xee
+	  || i.tm.opcode_modifier.opcodespace != SPACE_BASE))
+    {
+      as_bad (_("input/output port address isn't allowed with `%s'"),
+	      i.tm.name);
+      return;
+    }
+
   if (optimize && !i.no_optimize && i.tm.opcode_modifier.optimize)
     optimize_encoding ();
 
@@ -5106,7 +5147,7 @@ md_assemble (char *line)
       if (!process_operands ())
 	return;
     }
-  else if (!quiet_warnings && i.tm.opcode_modifier.ugh)
+  else if (!quiet_warnings && i.tm.opcode_modifier.operandconstraint == UGH)
     {
       /* UnixWare fsub no args is alias for fsubp, fadd -> faddp, etc.  */
       as_warn (_("translating to `%sp'"), i.tm.name);
@@ -6019,7 +6060,7 @@ check_VecOperands (const insn_template *t)
     }
 
   /* Check if default mask is allowed.  */
-  if (t->opcode_modifier.nodefmask
+  if (t->opcode_modifier.operandconstraint == NO_DEFAULT_MASK
       && (!i.mask.reg || i.mask.reg->reg_num == 0))
     {
       i.error = no_default_mask;
@@ -6101,7 +6142,7 @@ check_VecOperands (const insn_template *t)
 
   /* For some special instructions require that destination must be distinct
      from source registers.  */
-  if (t->opcode_modifier.distinctdest)
+  if (t->opcode_modifier.operandconstraint == DISTINCT_DEST)
     {
       unsigned int dest_reg = i.operands - 1;
 
@@ -7046,7 +7087,7 @@ process_suffix (void)
     i.suffix = QWORD_MNEM_SUFFIX;
   else if (i.reg_operands
 	   && (i.operands > 1 || i.types[0].bitfield.class == Reg)
-	   && !i.tm.opcode_modifier.addrprefixopreg)
+	   && i.tm.opcode_modifier.operandconstraint != ADDR_PREFIX_OP_REG)
     {
       unsigned int numop = i.operands;
 
@@ -7413,7 +7454,7 @@ process_suffix (void)
       break;
     }
 
-  if (i.tm.opcode_modifier.addrprefixopreg)
+  if (i.tm.opcode_modifier.operandconstraint == ADDR_PREFIX_OP_REG)
     {
       gas_assert (!i.suffix);
       gas_assert (i.reg_operands);
@@ -7807,7 +7848,7 @@ process_operands (void)
 		}
 	    }
 	}
-      else if (i.tm.opcode_modifier.implicit1stxmm0)
+      else if (i.tm.opcode_modifier.operandconstraint == IMPLICIT_1ST_XMM0)
 	{
 	  gas_assert ((MAX_OPERANDS - 1) > dupl
 		      && (i.tm.opcode_modifier.vexsources
@@ -7875,7 +7916,7 @@ process_operands (void)
       i.reg_operands--;
       i.tm.operands--;
     }
-  else if (i.tm.opcode_modifier.implicitquadgroup)
+  else if (i.tm.opcode_modifier.operandconstraint == IMPLICIT_QUAD_GROUP)
     {
       unsigned int regnum, first_reg_in_group, last_reg_in_group;
 
@@ -7892,7 +7933,7 @@ process_operands (void)
 		 register_prefix, i.op[1].regs->reg_name, last_reg_in_group,
 		 i.tm.name);
     }
-  else if (i.tm.opcode_modifier.regkludge)
+  else if (i.tm.opcode_modifier.operandconstraint == REG_KLUDGE)
     {
       /* The imul $imm, %reg instruction is converted into
 	 imul $imm, %reg, %reg, and the clr %reg instruction
@@ -7962,7 +8003,7 @@ process_operands (void)
       i.tm.base_opcode |= i.op[op].regs->reg_num;
       if ((i.op[op].regs->reg_flags & RegRex) != 0)
 	i.rex |= REX_B;
-      if (!quiet_warnings && i.tm.opcode_modifier.ugh)
+      if (!quiet_warnings && i.tm.opcode_modifier.operandconstraint == UGH)
 	{
 	  /* Warn about some common errors, but press on regardless.
 	     The first case can be generated by gcc (<= 2.8.1).  */
@@ -8189,7 +8230,7 @@ build_modrm_byte (void)
 	      unsigned int vvvv;
 
 	      /* Swap two source operands if needed.  */
-	      if (i.tm.opcode_modifier.swapsources)
+	      if (i.tm.opcode_modifier.operandconstraint == SWAP_SOURCES)
 		{
 		  vvvv = source;
 		  source = dest;
@@ -9112,6 +9153,44 @@ x86_cleanup (void)
   if (seg && subseg)
     subseg_set (seg, subseg);
 }
+
+bool
+x86_support_sframe_p (void)
+{
+  /* At this time, SFrame unwind is supported for AMD64 ABI only.  */
+  return (x86_elf_abi == X86_64_ABI);
+}
+
+bool
+x86_sframe_ra_tracking_p (void)
+{
+  /* In AMD64, return address is always stored on the stack at a fixed offset
+     from the CFA (provided via x86_sframe_cfa_ra_offset ()).
+     Do not track explicitly via an SFrame Frame Row Entry.  */
+  return false;
+}
+
+offsetT
+x86_sframe_cfa_ra_offset (void)
+{
+  gas_assert (x86_elf_abi == X86_64_ABI);
+  return (offsetT) -8;
+}
+
+unsigned char
+x86_sframe_get_abi_arch (void)
+{
+  unsigned char sframe_abi_arch = 0;
+
+  if (x86_support_sframe_p ())
+    {
+      gas_assert (!target_big_endian);
+      sframe_abi_arch = SFRAME_ABI_AMD64_ENDIAN_LITTLE;
+    }
+
+  return sframe_abi_arch;
+}
+
 #endif
 
 static unsigned int
@@ -11172,7 +11251,6 @@ i386_index_check (const char *operand_string)
   const insn_template *t = current_templates->start;
 
   if (t->opcode_modifier.isstring
-      && !t->cpu_flags.bitfield.cpupadlock
       && (current_templates->end[-1].opcode_modifier.isstring
 	  || i.mem_operands))
     {
@@ -11750,6 +11828,7 @@ i386_att_operand (char *operand_string)
 	  && !operand_type_check (i.types[this_operand], disp))
 	{
 	  i.types[this_operand] = i.base_reg->reg_type;
+	  i.input_output_operand = true;
 	  return 1;
 	}
 

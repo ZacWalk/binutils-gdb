@@ -3670,23 +3670,16 @@ copy_archive (bfd *ibfd, bfd *obfd, const char *output_target,
 	  if (del && bfd_get_arch (this_element) == bfd_arch_unknown)
 	    /* Try again as an unknown object file.  */
 	    ok_object = false;
-	  else if (!bfd_close (output_bfd))
-	    {
-	      bfd_nonfatal_message (output_name, NULL, NULL, NULL);
-	      /* Error in new object file. Don't change archive.  */
-	      status = 1;
-	    }
 	}
 
       if (!ok_object)
+	del = !copy_unknown_object (this_element, output_bfd);
+
+      if (!(ok_object && !del ? bfd_close : bfd_close_all_done) (output_bfd))
 	{
-	  del = !copy_unknown_object (this_element, output_bfd);
-	  if (!bfd_close_all_done (output_bfd))
-	    {
-	      bfd_nonfatal_message (output_name, NULL, NULL, NULL);
-	      /* Error in new object file. Don't change archive.  */
-	      status = 1;
-	    }
+	  bfd_nonfatal_message (output_name, NULL, NULL, NULL);
+	  /* Error in new object file. Don't change archive.  */
+	  status = 1;
 	}
 
       if (del)
@@ -3717,7 +3710,7 @@ copy_archive (bfd *ibfd, bfd *obfd, const char *output_target,
   *ptr = NULL;
 
   filename = bfd_get_filename (obfd);
-  if (!bfd_close (obfd))
+  if (!(status == 0 ? bfd_close : bfd_close_all_done) (obfd))
     {
       status = 1;
       bfd_nonfatal_message (filename, NULL, NULL, NULL);
@@ -4338,10 +4331,7 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
     }
 
   if (relsize == 0)
-    {
-      bfd_set_reloc (obfd, osection, NULL, 0);
-      osection->flags &= ~SEC_RELOC;
-    }
+    bfd_set_reloc (obfd, osection, NULL, 0);
   else
     {
       if (isection->orelocation != NULL)
@@ -4384,8 +4374,6 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 	}
 
       bfd_set_reloc (obfd, osection, relcount == 0 ? NULL : relpp, relcount);
-      if (relcount == 0)
-	osection->flags &= ~SEC_RELOC;
     }
 }
 

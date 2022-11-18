@@ -1239,6 +1239,8 @@ static struct riscv_supported_ext riscv_supported_vendor_x_ext[] =
   {"xtheadcmo",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xtheadcondmov",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xtheadfmemidx",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
+  {"xtheadfmv",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
+  {"xtheadint",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xtheadmac",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xtheadmemidx",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xtheadmempair",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
@@ -1876,13 +1878,6 @@ riscv_parse_check_conflicts (riscv_parse_subset_t *rps)
       rps->error_handler (_("rv%d does not support the `q' extension"), xlen);
       no_conflict = false;
     }
-  if (riscv_lookup_subset (rps->subset_list, "e", &subset)
-      && riscv_lookup_subset (rps->subset_list, "f", &subset))
-    {
-      rps->error_handler
-        (_("rv32e does not support the `f' extension"));
-      no_conflict = false;
-    }
   if (riscv_lookup_subset (rps->subset_list, "zfinx", &subset)
       && riscv_lookup_subset (rps->subset_list, "f", &subset))
     {
@@ -2426,6 +2421,10 @@ riscv_multi_subset_supports (riscv_parse_subset_t *rps,
       return riscv_subset_supports (rps, "xtheadcondmov");
     case INSN_CLASS_XTHEADFMEMIDX:
       return riscv_subset_supports (rps, "xtheadfmemidx");
+    case INSN_CLASS_XTHEADFMV:
+      return riscv_subset_supports (rps, "xtheadfmv");
+    case INSN_CLASS_XTHEADINT:
+      return riscv_subset_supports (rps, "xtheadint");
     case INSN_CLASS_XTHEADMAC:
       return riscv_subset_supports (rps, "xtheadmac");
     case INSN_CLASS_XTHEADMEMIDX:
@@ -2580,6 +2579,10 @@ riscv_multi_subset_supports_ext (riscv_parse_subset_t *rps,
       return "xtheadcondmov";
     case INSN_CLASS_XTHEADFMEMIDX:
       return "xtheadfmemidx";
+    case INSN_CLASS_XTHEADFMV:
+      return "xtheadfmv";
+    case INSN_CLASS_XTHEADINT:
+      return "xtheadint";
     case INSN_CLASS_XTHEADMAC:
       return "xtheadmac";
     case INSN_CLASS_XTHEADMEMIDX:
