@@ -487,6 +487,10 @@ cvt_frag_to_fill (segT sec ATTRIBUTE_UNUSED, fragS *fragP)
       dwarf2dbg_convert_frag (fragP);
       break;
 
+    case rs_sframe:
+      sframe_convert_frag (fragP);
+      break;
+
     case rs_machine_dependent:
       md_convert_frag (stdoutput, sec, fragP);
 
@@ -579,7 +583,6 @@ size_seg (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *xxx ATTRIBUTE_UNUSED)
   if (size > 0 && ! seginfo->bss)
     flags |= SEC_HAS_CONTENTS;
 
-  flags &= ~SEC_RELOC;
   x = bfd_set_section_flags (sec, flags);
   gas_assert (x);
 
@@ -1385,13 +1388,7 @@ write_relocs (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
   }
 #endif
 
-  if (n)
-    {
-      flagword flags = bfd_section_flags (sec);
-      flags |= SEC_RELOC;
-      bfd_set_section_flags (sec, flags);
-      bfd_set_reloc (stdoutput, sec, relocs, n);
-    }
+  bfd_set_reloc (stdoutput, sec, n ? relocs : NULL, n);
 
 #ifdef SET_SECTION_RELOCS
   SET_SECTION_RELOCS (sec, relocs, n);
@@ -2788,6 +2785,11 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
 	  address += dwarf2dbg_estimate_size_before_relax (fragP);
 	  break;
 
+	case rs_sframe:
+	  /* Initial estimate can be set to atleast 1 byte.  */
+	  address += sframe_estimate_size_before_relax (fragP);
+	  break;
+
 	default:
 	  BAD_CASE (fragP->fr_type);
 	  break;
@@ -3129,6 +3131,10 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
 
 	      case rs_dwarf2dbg:
 		growth = dwarf2dbg_relax_frag (fragP);
+		break;
+
+	      case rs_sframe:
+		growth = sframe_relax_frag (fragP);
 		break;
 
 	      default:

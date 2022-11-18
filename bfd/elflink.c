@@ -9997,7 +9997,8 @@ elf_link_output_symstrtab (void *finf,
 
   if (name == NULL
       || *name == '\0'
-      || (input_sec->flags & SEC_EXCLUDE))
+      || (!bfd_link_relocatable (flinfo->info)
+	  && (input_sec->flags & SEC_EXCLUDE)))
     elfsym->st_name = (unsigned long) -1;
   else
     {
@@ -10899,6 +10900,7 @@ elf_section_ignore_discarded_relocs (asection *sec)
     case SEC_INFO_TYPE_STABS:
     case SEC_INFO_TYPE_EH_FRAME:
     case SEC_INFO_TYPE_EH_FRAME_ENTRY:
+    case SEC_INFO_TYPE_SFRAME:
       return true;
     default:
       break;
@@ -10935,6 +10937,9 @@ _bfd_elf_default_action_discarded (asection *sec)
 
   if (bed->elf_backend_can_make_multiple_eh_frame
       && strncmp (sec->name, ".eh_frame.", 10) == 0)
+    return 0;
+
+  if (strcmp (".sframe", sec->name) == 0)
     return 0;
 
   if (strcmp (".gcc_except_table", sec->name) == 0)
@@ -11870,6 +11875,16 @@ elf_link_input_bfd (struct elf_final_link_info *flinfo, bfd *input_bfd)
 	      return false;
 	  }
 	  break;
+	case SEC_INFO_TYPE_SFRAME:
+	    {
+	      /* Merge .sframe sections into the ctf frame encoder
+		 context of the output_bfd's section.  The final .sframe
+		 output section will be written out later.  */
+	      if (!_bfd_elf_merge_section_sframe (output_bfd, flinfo->info,
+						  o, contents))
+		return false;
+	    }
+	    break;
 	default:
 	  {
 	    if (! (o->flags & SEC_EXCLUDE))
@@ -12862,8 +12877,7 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 
   /* If backend needs to output some local symbols not present in the hash
      table, do it now.  */
-  if (bed->elf_backend_output_arch_local_syms
-      && (info->strip != strip_all || emit_relocs))
+  if (bed->elf_backend_output_arch_local_syms)
     {
       if (! ((*bed->elf_backend_output_arch_local_syms)
 	     (abfd, info, &flinfo, elf_link_output_symstrtab)))
@@ -13451,6 +13465,9 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
     }
 
   if (! _bfd_elf_write_section_eh_frame_hdr (abfd, info))
+    goto error_return;
+
+  if (! _bfd_elf_write_section_sframe (abfd, info))
     goto error_return;
 
   if (info->callbacks->emit_ctf)
@@ -14906,6 +14923,41 @@ bfd_elf_discard_info (bfd *output_bfd, struct bfd_link_info *info)
       if (eh_changed)
 	elf_link_hash_traverse (elf_hash_table (info),
 				_bfd_elf_adjust_eh_frame_global_symbol, NULL);
+    }
+
+  o = bfd_get_section_by_name (output_bfd, ".sframe");
+  if (o != NULL)
+    {
+      asection *i;
+
+      for (i = o->map_head.s; i != NULL; i = i->map_head.s)
+	{
+	  if (i->size == 0)
+	    continue;
+
+	  abfd = i->owner;
+	  if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+	    continue;
+
+	  if (!init_reloc_cookie_for_section (&cookie, info, i))
+	    return -1;
+
+	  if (_bfd_elf_parse_sframe (abfd, info, i, &cookie))
+	    {
+	      if (_bfd_elf_discard_section_sframe (i,
+						   bfd_elf_reloc_symbol_deleted_p,
+						   &cookie))
+		{
+		  if (i->size != i->rawsize)
+		    changed = 1;
+		}
+	    }
+	  fini_reloc_cookie_for_section (&cookie, i);
+	}
+      /* Update the reference to the output .sframe section.  Used to
+	 determine later if PT_GNU_SFRAME segment is to be generated.  */
+      if (!_bfd_elf_set_section_sframe (output_bfd, info))
+	return -1;
     }
 
   for (abfd = info->input_bfds; abfd != NULL; abfd = abfd->link.next)

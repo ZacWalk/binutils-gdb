@@ -19,6 +19,7 @@
 
 #include "defs.h"
 #include "frame.h"
+#include "frame-info.h"
 #include "target.h"
 #include "value.h"
 #include "inferior.h"	/* for inferior_ptid */
@@ -55,9 +56,6 @@ static frame_info *sentinel_frame;
 
 /* Number of calls to reinit_frame_cache.  */
 static unsigned int frame_cache_generation = 0;
-
-/* See frame-info.h.  */
-intrusive_list<frame_info_ptr> frame_info_ptr::frame_list;
 
 /* See frame.h.  */
 
@@ -1707,9 +1705,13 @@ restore_selected_frame (frame_id frame_id, int frame_level)
   selected_frame = nullptr;
 }
 
-/* See frame.h.  */
+/* Lookup the frame_info object for the selected frame FRAME_ID /
+   FRAME_LEVEL and cache the result.
 
-void
+   If FRAME_LEVEL > 0 and the originally selected frame isn't found,
+   warn and select the innermost (current) frame.  */
+
+static void
 lookup_selected_frame (struct frame_id a_frame_id, int frame_level)
 {
   frame_info_ptr frame = NULL;
