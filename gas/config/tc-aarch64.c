@@ -2124,6 +2124,9 @@ const pseudo_typeS md_pseudo_table[] = {
   {"xword", s_aarch64_elf_cons, 8},
   {"dword", s_aarch64_elf_cons, 8},
   {"variant_pcs", s_variant_pcs, 0},
+#elif defined OBJ_COFF
+  {"word", cons, 4},
+  {"xword", cons, 8},
 #endif
   {"float16", float_cons, 'h'},
   {"bfloat16", float_cons, 'b'},
