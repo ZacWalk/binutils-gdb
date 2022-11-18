@@ -188,9 +188,11 @@ coff_aarch64_rtype_lookup (unsigned int code)
 #define bfd_pe_print_pdata      NULL
 #endif
 
+#ifndef COFF_WITH_PE
 /* Handle include/coff/aarch64.h external_reloc.  */
 #define SWAP_IN_RELOC_OFFSET	H_GET_32
 #define SWAP_OUT_RELOC_OFFSET	H_PUT_32
+#endif
 
 /* Return TRUE if this relocation should
    appear in the output .reloc section.  */
