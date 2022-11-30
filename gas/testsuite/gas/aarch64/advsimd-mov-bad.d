@@ -1,5 +1,6 @@
 #source: advsimd-mov-bad.s
 #readelf: -s --wide
+#skip: *-*-pe *-*-coff
 
 Symbol table '.symtab' contains 6 entries:
  +Num:.*

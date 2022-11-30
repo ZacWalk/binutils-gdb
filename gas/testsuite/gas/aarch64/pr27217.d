@@ -1,6 +1,7 @@
 # Check that expressions that generate relocations work when the symbol is a constant.
 #name: PR27217
 #objdump: -rd
+#skip: *-*-pe *-*-coff
 
 .*:     file format .*
 

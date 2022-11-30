@@ -294,6 +294,12 @@ unsigned char aarch64_sframe_get_abi_arch (void);
 
 #endif /* OBJ_ELF  */
 
+#ifdef TE_PE
+
+#define O_secrel O_md1
+
+#endif /* TE_PE */
+
 #define MD_PCREL_FROM_SECTION(F,S) md_pcrel_from_section(F,S)
 
 extern void aarch64_frag_align_code (int, int);

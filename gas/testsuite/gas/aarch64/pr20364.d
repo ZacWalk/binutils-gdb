@@ -1,6 +1,7 @@
 # Check that ".align <size>, <fill>" does not set the mapping state to DATA, causing unnecessary frag generation.
 #name: PR20364 
 #objdump: -d
+#skip: *-*-pe *-*-coff
 
 .*:     file format .*
 

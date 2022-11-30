@@ -1,5 +1,6 @@
 # warning_output: mops_invalid_2.l
 # objdump: -dr -M notes
+#skip: *-*-pe *-*-coff
 
 .*
 

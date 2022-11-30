@@ -2,6 +2,7 @@
 # source: bfloat16-directive.s
 # as: -mbig-endian
 # objdump: -s --section=.data
+#skip: *-*-pe *-*-coff
 
 .*: +file format .*
 

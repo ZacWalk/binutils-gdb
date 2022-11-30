@@ -42,56 +42,97 @@
 /* In case we're on a 32-bit machine, construct a 64-bit "-1" value.  */
 #define MINUS_ONE (~ (bfd_vma) 0)
 
-static const reloc_howto_type arm64_reloc_howto_64 = HOWTO(IMAGE_REL_ARM64_ADDR64, 0, 8, 64, false, 0,
+static const reloc_howto_type arm64_reloc_howto_64 = HOWTO(IMAGE_REL_ARM64_ADDR64, 0, 8, 64, true, 0,
 	 complain_overflow_bitfield,
-	 NULL, "64",
+	 NULL, "IMAGE_REL_ARM64_ADDR64",
 	 false, MINUS_ONE, MINUS_ONE, false);
 
 static const reloc_howto_type arm64_reloc_howto_32 = HOWTO (IMAGE_REL_ARM64_ADDR32, 0, 4, 32, false, 0,
 	 complain_overflow_bitfield,
-	 NULL, "32",
+	 NULL, "IMAGE_REL_ARM64_ADDR32",
 	 false, 0xffffffff, 0xffffffff, false);
+
+static const reloc_howto_type arm64_reloc_howto_32nb = HOWTO (IMAGE_REL_ARM64_ADDR32NB, 0, 4, 32, false, 0,
+	 complain_overflow_bitfield,
+	 NULL, "IMAGE_REL_ARM64_ADDR32NB",
+	 false, 0xffffffff, 0xffffffff, false);   
 
 static const reloc_howto_type arm64_reloc_howto_32_pcrel = HOWTO (IMAGE_REL_ARM64_REL32, 0, 4, 32, true, 0,
 	 complain_overflow_bitfield,
-	 NULL, "DISP32",
+	 NULL, "IMAGE_REL_ARM64_REL32",
 	 false, 0xffffffff, 0xffffffff, true);
 
 static const reloc_howto_type arm64_reloc_howto_branch26 = HOWTO (IMAGE_REL_ARM64_BRANCH26, 0, 4, 26, true, 0,
 	 complain_overflow_bitfield,
-	 NULL, "BRANCH26",
+	 NULL, "IMAGE_REL_ARM64_BRANCH26",
 	 false, 0x03ffffff, 0x03ffffff, true);
 
-static const reloc_howto_type arm64_reloc_howto_page21 = HOWTO (IMAGE_REL_ARM64_PAGEBASE_REL21, 12, 4, 21, true, 0,
+static const reloc_howto_type arm64_reloc_howto_page21 = HOWTO (IMAGE_REL_ARM64_PAGEBASE_REL21, 12, 4, 21, false, 0,
 	 complain_overflow_signed,
-	 NULL, "PAGE21",
+	 NULL, "IMAGE_REL_ARM64_PAGEBASE_REL21",
 	 false, 0x1fffff, 0x1fffff, false);
+
+static const reloc_howto_type arm64_reloc_howto_section = HOWTO (IMAGE_REL_ARM64_SECTION, 0, 4, 16, false, 0,
+	 complain_overflow_signed,
+	 NULL, "IMAGE_REL_ARM64_SECTION",
+	 false, 0xffff, 0xffff, false);   
 
 static const reloc_howto_type arm64_reloc_howto_lo21 = HOWTO (IMAGE_REL_ARM64_REL21, 0, 4, 21, true, 0,
 	 complain_overflow_signed,
-	 NULL, "LO21",
+	 NULL, "IMAGE_REL_ARM64_REL21",
 	 false, 0x1fffff, 0x1fffff, true);
 
-static const reloc_howto_type arm64_reloc_howto_pgoff12 = HOWTO (IMAGE_REL_ARM64_PAGEOFFSET_12L, 1, 4, 12, true, 0,
+static const reloc_howto_type arm64_reloc_howto_pgoff12l = HOWTO (IMAGE_REL_ARM64_PAGEOFFSET_12L, 1, 4, 12, true, 0,
 	 complain_overflow_signed,
-	 NULL, "PGOFF12",
+	 NULL, "IMAGE_REL_ARM64_PAGEOFFSET_12L",
+	 false, 0xffe, 0xffe, true);
+
+static const reloc_howto_type arm64_reloc_howto_pgoff12a = HOWTO (IMAGE_REL_ARM64_PAGEOFFSET_12A, 1, 4, 12, true, 0,
+	 complain_overflow_signed,
+	 NULL, "IMAGE_REL_ARM64_PAGEOFFSET_12A",
 	 false, 0xffe, 0xffe, true);
 
 static const reloc_howto_type arm64_reloc_howto_branch19 = HOWTO (IMAGE_REL_ARM64_BRANCH19, 2, 4, 19, true, 0,
 	 complain_overflow_signed,
-	 NULL, "BRANCH19",
+	 NULL, "IMAGE_REL_ARM64_BRANCH19",
 	 false, 0x7ffff, 0x7ffff, true);
+
+static const reloc_howto_type arm64_reloc_howto_branch14 = HOWTO (IMAGE_REL_ARM64_BRANCH14, 2, 4, 15, true, 0,
+	 complain_overflow_signed,
+	 NULL, "IMAGE_REL_ARM64_BRANCH14",
+	 false, 0x7ffff, 0x7ffff, true);
+
+static const reloc_howto_type arm64_reloc_howto_secrel_low12a = HOWTO (IMAGE_REL_ARM64_SECREL_LOW12A, 12, 4, 12, true, 0,
+	 complain_overflow_signed,
+	 NULL, "IMAGE_REL_ARM64_SECREL_LOW12A",
+	 false, 0xffe, 0xffe, false);
+
+static const reloc_howto_type arm64_reloc_howto_secrel_low12l = HOWTO (IMAGE_REL_ARM64_SECREL_LOW12L, 12, 4, 12, true, 0,
+	 complain_overflow_signed,
+	 NULL, "IMAGE_REL_ARM64_SECREL_LOW12L",
+	 false, 0xffe, 0xffe, false);
+
+static const reloc_howto_type arm64_reloc_howto_secrel_high12 = HOWTO (IMAGE_REL_ARM64_SECREL_HIGH12A, 12, 4, 12, true, 0,
+	 complain_overflow_signed,
+	 NULL, "IMAGE_REL_ARM64_SECREL_HIGH12A",
+	 false, 0xffe, 0xffe, false);
 
 
 static const reloc_howto_type* const arm64_howto_table[] = {
      &arm64_reloc_howto_64,
      &arm64_reloc_howto_32,
+     &arm64_reloc_howto_32nb,
      &arm64_reloc_howto_32_pcrel,
      &arm64_reloc_howto_branch26,
      &arm64_reloc_howto_page21,
      &arm64_reloc_howto_lo21,
-     &arm64_reloc_howto_pgoff12,
-     &arm64_reloc_howto_branch19
+     &arm64_reloc_howto_pgoff12a,     
+     &arm64_reloc_howto_pgoff12l,
+     &arm64_reloc_howto_branch19,
+     &arm64_reloc_howto_branch14,
+     &arm64_reloc_howto_secrel_high12,
+     &arm64_reloc_howto_secrel_low12a,
+     &arm64_reloc_howto_secrel_low12l
 };
 
 #ifndef NUM_ELEM
@@ -112,19 +153,45 @@ coff_aarch64_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED, bfd_reloc_code_real
     return &arm64_reloc_howto_64;
   case BFD_RELOC_32:
     return &arm64_reloc_howto_32;
+  case BFD_RELOC_32_BASEREL:
+    return &arm64_reloc_howto_32nb;
   case BFD_RELOC_32_PCREL:
+  case BFD_RELOC_64_PCREL:
     return &arm64_reloc_howto_32_pcrel;
   case BFD_RELOC_AARCH64_CALL26:
   case BFD_RELOC_AARCH64_JUMP26:
     return &arm64_reloc_howto_branch26;
   case BFD_RELOC_AARCH64_ADR_HI21_PCREL:
+  case BFD_RELOC_AARCH64_TLSDESC_ADR_PAGE21:
     return &arm64_reloc_howto_page21;
-  case BFD_RELOC_AARCH64_ADR_LO21_PCREL:
+  case BFD_RELOC_AARCH64_ADR_LO21_PCREL:  
     return &arm64_reloc_howto_lo21;
+  case BFD_RELOC_AARCH64_LDST8_LO12:
   case BFD_RELOC_AARCH64_LDST16_LO12:
-    return &arm64_reloc_howto_pgoff12;
+  case BFD_RELOC_AARCH64_LDST32_LO12:
+  case BFD_RELOC_AARCH64_LDST64_LO12:
+  case BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12_NC:
+  case BFD_RELOC_AARCH64_LDST128_LO12:
+    return &arm64_reloc_howto_pgoff12l;
+  case BFD_RELOC_AARCH64_ADD_LO12:
+  case BFD_RELOC_AARCH64_TLSLD_ADD_LO12_NC:
+    return &arm64_reloc_howto_pgoff12a;
+  case BFD_RELOC_AARCH64_TLSLD_ADD_DTPREL_HI12:
+    return &arm64_reloc_howto_secrel_high12;
+  case BFD_RELOC_AARCH64_TLSLD_ADD_DTPREL_LO12:
+    return &arm64_reloc_howto_secrel_low12a;
+  case BFD_RELOC_AARCH64_TLSLD_LDST64_DTPREL_LO12:
+  case BFD_RELOC_AARCH64_TLSLD_LDST32_DTPREL_LO12:
+    return  &arm64_reloc_howto_secrel_low12l;
   case BFD_RELOC_AARCH64_BRANCH19:
     return &arm64_reloc_howto_branch19;
+  case BFD_RELOC_AARCH64_TSTBR14:
+    return &arm64_reloc_howto_branch14;
+  case BFD_RELOC_32_SECREL:
+    return &arm64_reloc_howto_section;
+  case BFD_RELOC_16_SECIDX:
+    return &arm64_reloc_howto_page21;
+
   default:
     BFD_FAIL ();
     return NULL;
@@ -165,12 +232,24 @@ coff_aarch64_rtype_lookup (unsigned int code)
       return &arm64_reloc_howto_branch26;
     case IMAGE_REL_ARM64_PAGEBASE_REL21:
       return &arm64_reloc_howto_page21;
+    case IMAGE_REL_ARM64_SECTION:
+      return &arm64_reloc_howto_section;  
     case IMAGE_REL_ARM64_REL21:
       return &arm64_reloc_howto_lo21;
+    case IMAGE_REL_ARM64_PAGEOFFSET_12A:
+      return &arm64_reloc_howto_pgoff12a;    
     case IMAGE_REL_ARM64_PAGEOFFSET_12L:
-      return &arm64_reloc_howto_pgoff12;
+      return &arm64_reloc_howto_pgoff12l;
     case IMAGE_REL_ARM64_BRANCH19:
       return &arm64_reloc_howto_branch19;
+    case IMAGE_REL_ARM64_BRANCH14:
+      return &arm64_reloc_howto_branch14;
+    case IMAGE_REL_ARM64_SECREL_HIGH12A:
+      return &arm64_reloc_howto_secrel_high12;
+    case IMAGE_REL_ARM64_SECREL_LOW12A:
+      return &arm64_reloc_howto_secrel_low12a;
+    case IMAGE_REL_ARM64_SECREL_LOW12L:
+      return &arm64_reloc_howto_secrel_low12l;
     default:
       BFD_FAIL ();
       return NULL;

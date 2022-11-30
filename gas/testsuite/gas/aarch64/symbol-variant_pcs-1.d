@@ -1,5 +1,6 @@
 #objdump: -t
 #as:  --generate-missing-build-notes=no
+#skip: *-*-pe *-*-coff
 
 .*:     file format .*
 

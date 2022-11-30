@@ -1,5 +1,6 @@
 #as: -mabi=lp64
 #objdump: -dr
+#skip: *-*-pe *-*-coff
 
 .*:     file format .*
 

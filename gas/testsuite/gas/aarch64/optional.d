@@ -1,4 +1,5 @@
 #objdump: -dr
+#skip: *-*-pe *-*-coff
 
 .*:     file format .*
 

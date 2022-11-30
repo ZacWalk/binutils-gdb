@@ -1,4 +1,5 @@
 #objdump: --dwarf=frames
+#skip: *-*-pe *-*-coff
 
 .+:     file .+
 

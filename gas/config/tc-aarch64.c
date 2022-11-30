@@ -1889,10 +1889,12 @@ s_ltorg (int ignored ATTRIBUTE_UNUSED)
     }
 }
 
-#ifdef OBJ_ELF
+
 /* Forward declarations for functions below, in the MD interface
    section.  */
 static fixS *fix_new_aarch64 (fragS *, int, short, expressionS *, int, int);
+
+#ifdef OBJ_ELF
 static struct reloc_table_entry * find_reloc_table_entry (char **);
 
 /* Directives: Data.  */
@@ -2056,6 +2058,8 @@ s_tlsdescadd (int ignored ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
+#endif	/* OBJ_ELF */
+
 /* Emit BFD_RELOC_AARCH64_TLSDESC_CALL on the next BLR instruction.  */
 
 static void
@@ -2076,6 +2080,8 @@ s_tlsdesccall (int ignored ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
+#ifdef OBJ_ELF
+
 /* Emit BFD_RELOC_AARCH64_TLSDESC_LDR on the next LDR instruction.  */
 
 static void
@@ -2091,6 +2097,48 @@ s_tlsdescldr (int ignored ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 #endif	/* OBJ_ELF */
+
+#ifdef TE_PE
+
+static void
+pe_directive_secrel (int dummy ATTRIBUTE_UNUSED)
+{
+  expressionS exp;
+
+  do
+    {
+      expression (&exp);
+      if (exp.X_op == O_symbol)
+	exp.X_op = O_secrel;
+
+      emit_expr (&exp, 4);
+    }
+  while (*input_line_pointer++ == ',');
+
+  input_line_pointer--;
+  demand_empty_rest_of_line ();
+}
+
+static void
+pe_directive_secidx (int dummy ATTRIBUTE_UNUSED)
+{
+  expressionS exp;
+
+  do
+    {
+      expression (&exp);
+      if (exp.X_op == O_symbol)
+	exp.X_op = O_secidx;
+
+      emit_expr (&exp, 2);
+    }
+  while (*input_line_pointer++ == ',');
+
+  input_line_pointer--;
+  demand_empty_rest_of_line ();
+}
+
+#endif /* TE_PE */
 
 static void s_aarch64_arch (int);
 static void s_aarch64_cpu (int);
@@ -2125,6 +2173,9 @@ const pseudo_typeS md_pseudo_table[] = {
   {"dword", s_aarch64_elf_cons, 8},
   {"variant_pcs", s_variant_pcs, 0},
 #elif defined OBJ_COFF
+  {"tlsdesccall", s_tlsdesccall, 0},
+  {"secrel32", pe_directive_secrel, 0},
+  {"secidx", pe_directive_secidx, 0},
   {"word", cons, 4},
   {"xword", cons, 8},
 #endif
@@ -9150,7 +9201,9 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
       /* Should always be exported to object file, see
 	 aarch64_force_relocation().  */
       gas_assert (!fixP->fx_done);
+#ifndef TE_PE
       gas_assert (seg->use_rela_p);
+#endif
       break;
 
     case BFD_RELOC_AARCH64_TLSDESC_LD_LO12_NC:
@@ -9161,7 +9214,9 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
       /* Should always be exported to object file, see
 	 aarch64_force_relocation().  */
       gas_assert (!fixP->fx_done);
+#ifndef TE_PE
       gas_assert (seg->use_rela_p);
+#endif
       break;
 
     case BFD_RELOC_AARCH64_TLSDESC_ADD_LO12:
@@ -9220,7 +9275,9 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
       /* Should always be exported to object file, see
 	 aarch64_force_relocation().  */
       gas_assert (!fixP->fx_done);
+#ifndef TE_PE
       gas_assert (seg->use_rela_p);
+#endif
       break;
 
     case BFD_RELOC_AARCH64_LD_GOT_LO12_NC:
@@ -9230,7 +9287,9 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
 			 ? BFD_RELOC_AARCH64_LD32_GOT_LO12_NC
 			 : BFD_RELOC_AARCH64_LD64_GOT_LO12_NC);
       gas_assert (!fixP->fx_done);
+#ifndef TE_PE
       gas_assert (seg->use_rela_p);
+#endif
       break;
 
     case BFD_RELOC_AARCH64_ADD_LO12:
@@ -9251,7 +9310,9 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
       /* Should always be exported to object file, see
 	 aarch64_force_relocation().  */
       gas_assert (!fixP->fx_done);
+#ifndef TE_PE
       gas_assert (seg->use_rela_p);
+#endif
       break;
 
     case BFD_RELOC_AARCH64_TLSDESC_ADD:
@@ -9259,6 +9320,10 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
     case BFD_RELOC_AARCH64_TLSDESC_LDR:
       break;
 
+#ifdef TE_PE
+    case BFD_RELOC_32_SECREL:
+    case BFD_RELOC_16_SECIDX:
+#endif
     case BFD_RELOC_UNUSED:
       /* An error will already have been reported.  */
       break;
@@ -9367,6 +9432,16 @@ cons_fix_new_aarch64 (fragS * frag, int where, int size, expressionS * exp)
       type = BFD_RELOC_UNUSED;
       break;
     }
+
+#ifdef TE_PE
+  if (exp->X_op == O_secrel)
+    {
+      exp->X_op = O_symbol;
+      type = BFD_RELOC_32_SECREL;
+    }
+  else if (exp->X_op == O_secidx)
+    type = BFD_RELOC_16_SECIDX;
+#endif
 
   fix_new_exp (frag, where, (int) size, exp, pcrel, type);
 }

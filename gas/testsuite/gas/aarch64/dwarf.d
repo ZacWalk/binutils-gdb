@@ -1,5 +1,7 @@
 #readelf: -s --debug-dump=aranges
 #as: -g --generate-missing-build-notes=no
+#notarget: *-*-pe *-*-wince
+#skip: *-*-pe *-*-coff
 
 Symbol table '.symtab' contains 11 entries:
    Num:[ ]+Value[ ]+Size[ ]+Type[ ]+Bind[ ]+Vis[ ]+Ndx[ ]+Name

@@ -1,5 +1,6 @@
 #as: -mabi=ilp32
 #objdump: -dr
+#skip: *-*-pe *-*-coff
 
 .*:     file format .*
 

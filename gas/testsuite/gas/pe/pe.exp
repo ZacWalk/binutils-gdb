@@ -56,6 +56,11 @@ if ([istarget "x86_64-*-mingw*"]) then {
 # This test is only for AArch64
 if ([istarget "aarch64-*-pe*"]) {
 	run_dump_test "pe-aarch64"
+	run_dump_test "pe-aarch64-reloc-1"
+	run_dump_test "pe-aarch64-reloc-2"
+	run_dump_test "pe-aarch64-reloc-data"
+	run_dump_test "pe-aarch64-tls"
+	run_dump_test "pe-aarch64-symbol"
 }
 
 # Big obj

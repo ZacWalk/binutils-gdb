@@ -1,6 +1,6 @@
 #as: -mabi=lp64
 #objdump: -dr
-#skip: aarch64_be-*-*
+#skip: aarch64_be-*-* *-*-pe *-*-coff
 
 .*:     file format .*
 

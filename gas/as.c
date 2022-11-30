@@ -537,9 +537,11 @@ parse_args (int * pargc, char *** pargv)
     ,{"noexecstack", no_argument, NULL, OPTION_NOEXECSTACK}
     ,{"size-check", required_argument, NULL, OPTION_SIZE_CHECK}
     ,{"elf-stt-common", required_argument, NULL, OPTION_ELF_STT_COMMON}
-    ,{"sectname-subst", no_argument, NULL, OPTION_SECTNAME_SUBST}
-    ,{"generate-missing-build-notes", required_argument, NULL, OPTION_ELF_BUILD_NOTES}
+    ,{"sectname-subst", no_argument, NULL, OPTION_SECTNAME_SUBST}    
     ,{"gsframe", no_argument, NULL, OPTION_SFRAME}
+#endif
+#if defined OBJ_ELF || defined OBJ_MAYBE_ELF || (defined (TE_PE) && defined (TC_AARCH64))
+    ,{"generate-missing-build-notes", required_argument, NULL, OPTION_ELF_BUILD_NOTES}
 #endif
     ,{"fatal-warnings", no_argument, NULL, OPTION_WARN_FATAL}
     ,{"gdwarf-2", no_argument, NULL, OPTION_GDWARF_2}
@@ -1017,6 +1019,11 @@ This program has absolutely no warranty.\n"));
 	  break;
 
 #endif /* OBJ_ELF */
+
+#if defined (TE_PE) && defined (TC_AARCH64)
+  case OPTION_ELF_BUILD_NOTES:
+	  break;
+#endif
 
 	case 'Z':
 	  flag_always_generate_output = 1;
