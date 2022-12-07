@@ -4,9 +4,11 @@
 set -ex # stop bash script on error
 
 gcc_remote_url=$(git config --get remote.origin.url)
-pull_request_id=$(git name-rev --name-only HEAD)
-pull_request_id=$(echo $pull_request_id | sed -E "s/remotes\/pull\/([[:digit:]]+)\/.*/\1/")
-workspace_folder="~/workspace/$runner_name/PR$pull_request_id"
+rev_reference=$(git name-rev --name-only HEAD)
+rev_reference=${rev_reference#remotes/*}
+rev_reference_folder_name=${rev_reference//\//-}
+workspace_runner_folder="~/workspace/$runner_name"
+workspace_folder="$workspace_runner_folder/$rev_reference_folder_name"
 gcc_build_folder="$workspace_folder/build/binutils-gdb"
 gcc_source_folder="$workspace_folder/binutils-gdb"
 gmp_object_folder="$workspace_folder/build/gmp"
@@ -15,13 +17,14 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     set -e # stop bash script on error
     pwd
     [ -d $workspace_folder ] && rm -r $workspace_folder
+    find $workspace_runner_folder -mindepth 1 -maxdepth 1 -type d -mmin +600 -exec rm -rf {} \; # clean up session files after 10h
     mkdir -p $workspace_folder
     cd $workspace_folder
     sudo apt-get update
     sudo apt-get -y install build-essential binutils-for-build texinfo bison flex zlib1g-dev libgmp-dev dejagnu
     git clone ${gcc_remote_url}
     cd binutils-gdb
-    git fetch origin pull/$pull_request_id/head:pullrequest
+    git fetch origin $rev_reference:pullrequest
     git checkout pullrequest
     mkdir -p $gcc_build_folder
     cd $gcc_build_folder
