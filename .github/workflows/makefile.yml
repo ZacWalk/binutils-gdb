@@ -20,12 +20,6 @@ jobs:
     - name: build
       run: make
       
-#    - name: Run check
-#      run: make check
-      
-#    - name: Run distcheck
-#      run: make distcheck
-
   build-all-targets:
 
     runs-on: ubuntu-latest
@@ -38,3 +32,13 @@ jobs:
       
     - name: build
       run: make
+
+  test-gmp-aarch64:
+
+    runs-on: [self-hosted, Windows, ARM64]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Testing GMP(GCC)
+      run: C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
