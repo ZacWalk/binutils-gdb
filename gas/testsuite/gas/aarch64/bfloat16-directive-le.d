@@ -2,6 +2,7 @@
 # source: bfloat16-directive.s
 # as: -mlittle-endian
 # objdump: -s --section=.data
+#notarget: *-*-pe* *-*-mingw*
 
 .*: +file format .*
 

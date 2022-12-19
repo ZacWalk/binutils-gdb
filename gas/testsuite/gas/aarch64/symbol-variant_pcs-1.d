@@ -1,5 +1,6 @@
 #objdump: -t
 #as:  --generate-missing-build-notes=no
+#notarget: *-*-pe* *-*-mingw*
 
 .*:     file format .*
 

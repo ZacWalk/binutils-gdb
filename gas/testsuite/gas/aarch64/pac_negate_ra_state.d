@@ -1,4 +1,5 @@
 #objdump: --dwarf=frames
+#notarget: *-*-pe* *-*-mingw*
 
 .+:     file .+
 

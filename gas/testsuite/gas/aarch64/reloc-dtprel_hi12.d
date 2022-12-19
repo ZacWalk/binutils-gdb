@@ -1,4 +1,5 @@
 #objdump: -dr
+#notarget: *-*-pe* *-*-mingw*
 
 .*:     file format .*
 

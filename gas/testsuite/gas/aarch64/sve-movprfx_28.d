@@ -2,6 +2,7 @@
 #warning_output: sve-movprfx_28.l
 #as: -I$srcdir/$subdir --generate-missing-build-notes=no
 #objdump: -Dr -M notes
+#notarget: *-*-pe* *-*-mingw*
 
 .* file format .*
 

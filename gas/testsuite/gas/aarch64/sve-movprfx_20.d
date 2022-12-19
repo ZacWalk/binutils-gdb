@@ -2,6 +2,7 @@
 #warning_output: sve-movprfx_20.l
 #as: -march=armv8-a+sve -I$srcdir/$subdir --generate-missing-build-notes=no
 #objdump: -Dr -M notes
+#notarget: *-*-pe* *-*-mingw*
 
 .* file format .*
 

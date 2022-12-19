@@ -1,6 +1,7 @@
 #as: -mabi=ilp32
 #source: reloc-tprel_lo12_nc-ldst64.s
 #objdump: -dr
+#notarget: *-*-pe* *-*-mingw*
 
 .*:     file format .*
 

@@ -2,6 +2,7 @@
 # Test assembling a file with functions signed by two different pointer
 # authentication keys. It must interpret .cfi_b_key_frame properly and emit a
 # 'B' character into the correct CIE's augmentation string.
+#notarget: *-*-pe* *-*-mingw*
 
 .+:     file .+
 

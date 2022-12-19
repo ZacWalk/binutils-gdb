@@ -1,5 +1,6 @@
 #objdump: -dr
 #name: movw relocation symbol name
+#notarget: *-*-pe* *-*-mingw*
 
 .*:     file format .*
 

@@ -1,6 +1,7 @@
 #as: -mbig-obj
 #objdump: -h
 #name: PE big obj
+#notarget: aarch64-*
 
 .*: *file format pe-bigobj-.*
 

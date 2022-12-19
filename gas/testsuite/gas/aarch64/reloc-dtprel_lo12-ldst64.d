@@ -1,5 +1,6 @@
 #as: -mabi=lp64
 #objdump: -dr
+#notarget: *-*-pe* *-*-mingw*
 
 .*:     file format .*
 

@@ -1,6 +1,7 @@
 #as: -mabi=lp64
 #readelf: -S
 #name: AArch64 section tail padding
+#notarget: *-*-pe* *-*-mingw*
 
 There are .* section headers, starting at offset .*:
 

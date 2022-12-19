@@ -2,6 +2,8 @@
 
 .dword 0
 
+# 2008
+.global foo
 foo:
 
 # 4-byte literal

@@ -106,7 +106,7 @@ fragment <<EOF
 #define PE_DEF_SECTION_ALIGNMENT ${OVERRIDE_SECTION_ALIGNMENT}
 #endif
 
-#ifdef TARGET_IS_i386pep
+#if defined(TARGET_IS_i386pep) || defined(TARGET_IS_aarch64pe)
 #define DLL_SUPPORT
 #endif
 
@@ -115,7 +115,7 @@ fragment <<EOF
 					 | IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA \
   					 | IMAGE_DLL_CHARACTERISTICS_NX_COMPAT)
 
-#if defined(TARGET_IS_i386pep) || ! defined(DLL_SUPPORT)
+#if defined(TARGET_IS_i386pep) || defined(TARGET_IS_aarch64pe) || ! defined(DLL_SUPPORT)
 #define	PE_DEF_SUBSYSTEM		3
 #undef NT_EXE_IMAGE_BASE
 #define NT_EXE_IMAGE_BASE \
@@ -1541,14 +1541,14 @@ gld${EMULATION_NAME}_after_open (void)
   if (pep_enable_stdcall_fixup) /* -1=warn or 1=enable */
     pep_fixup_stdcalls ();
 
-#ifndef TARGET_IS_i386pep
+#if !defined(TARGET_IS_i386pep) && !defined(TARGET_IS_aarch64pe)
   if (bfd_link_pic (&link_info))
 #else
   if (!bfd_link_relocatable (&link_info))
 #endif
     pep_dll_build_sections (link_info.output_bfd, &link_info);
 
-#ifndef TARGET_IS_i386pep
+#if !defined(TARGET_IS_i386pep) && !defined(TARGET_IS_aarch64pe)
   else
     pep_exe_build_sections (link_info.output_bfd, &link_info);
 #endif
@@ -1844,6 +1844,8 @@ gld${EMULATION_NAME}_recognized_file (lang_input_statement_type *entry ATTRIBUTE
 #ifdef DLL_SUPPORT
 #ifdef TARGET_IS_i386pep
   pep_dll_id_target ("pei-x86-64");
+#elif defined(TARGET_IS_aarch64pe)
+  pep_dll_id_target ("pei-aarch64-little");
 #endif
   if (pep_bfd_is_dll (entry->the_bfd))
     return pep_implied_import_dll (entry->filename);

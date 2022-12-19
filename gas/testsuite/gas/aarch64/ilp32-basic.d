@@ -1,5 +1,6 @@
 #as: -mabi=ilp32
 #objdump: -dr
+#notarget: *-*-pe* *-*-mingw*
 
 .*:     file format elf32-.*aarch64
 

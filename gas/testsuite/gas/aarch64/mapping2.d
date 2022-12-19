@@ -2,7 +2,7 @@
 #as: --generate-missing-build-notes=no
 #name: AArch64 Mapping Symbols Test 2
 # This test is only valid on ELF based ports.
-#notarget: *-*-pe *-*-wince
+#notarget: *-*-pe* *-*-wince *-*-mingw*
 
 .*: +file format.*aarch64.*
 

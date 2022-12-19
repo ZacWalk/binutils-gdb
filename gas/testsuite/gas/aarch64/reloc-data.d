@@ -1,6 +1,7 @@
 #as: -mabi=lp64
 #objdump: -dr
 #skip: aarch64_be-*-*
+#notarget: *-*-pe* *-*-mingw*
 
 .*:     file format .*
 
