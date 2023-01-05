@@ -14,13 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: 'master'
-
-
       - name: Sync Fork
         run: |
+          git clone https://github.com/Windows-on-ARM-Experiments/binutils-gdb.git
+          cd binutils-gdb
           git remote add upstream https://github.com/bminor/binutils-gdb.git
           git fetch upstream
           git checkout origin/master
