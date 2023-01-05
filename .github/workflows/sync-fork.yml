@@ -14,17 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: 'master'
-
       - name: Sync Fork
-        shell: bash -x {0}
-        run: |
-          git remote add upstream https://github.com/bminor/binutils-gdb.git
-          git fetch upstream
-          git merge upstream/master
-          git push origin HEAD:master
-
-
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b master
     
