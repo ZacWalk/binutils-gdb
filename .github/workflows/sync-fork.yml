@@ -18,6 +18,7 @@ jobs:
 
       - name: Sync Fork
         run: |
+          git fetch origin master
           git checkout master
           git fetch origin add-CI-to-master-branch
           git checkout origin/add-CI-to-master-branch -- .github/workflows
