@@ -21,6 +21,8 @@ jobs:
           git remote add upstream https://github.com/bminor/binutils-gdb.git
           git fetch upstream
           git merge upstream/master
+          git config user.name 'Evgeny Karpov'
+          git config user.email 'eukarpov@gmail.com'
           git push origin HEAD:master
 
 
