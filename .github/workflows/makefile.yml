@@ -2,7 +2,7 @@ name: Makefile CI
 
 on:
   push:
-    branches: [ "aarch64-pe-dev" ]
+    branches: [ "aarch64-pe-dev", "master" ]
   pull_request:
     branches: [ "aarch64-pe-dev" ]
 
