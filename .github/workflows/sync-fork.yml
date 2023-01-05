@@ -20,6 +20,7 @@ jobs:
 
       - name: Sync Fork
         run: |
+          git checkout master
           git fetch origin add-CI-to-master-branch
           git checkout origin/add-CI-to-master-branch -- .github/workflows
           .github/workflows/scripts/sync-fork.sh
