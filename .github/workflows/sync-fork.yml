@@ -3,7 +3,7 @@ name: Sync Fork
 on:
   workflow_dispatch:
   schedule:
-  - cron: "0 3 * * *"
+    - cron: "0 3 * * *"
   push:
     branches: [ "aarch64-pe-dev" ]
   pull_request:
@@ -14,9 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Sync Fork
-    run: .github/workflows/scripts/sync-fork.sh
+      - name: Sync Fork
+        run: .github/workflows/scripts/sync-fork.sh
+
 
     
