@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: 'master'
+
       - name: Sync Fork
         shell: bash -x {0}
         run: |
-          git clone -b master --single-branch https://github.com/Windows-on-ARM-Experiments/binutils-gdb.git
-          cd binutils-gdb
           git remote add upstream https://github.com/bminor/binutils-gdb.git
           git fetch upstream
           git merge upstream/master
-          git config --global user.name 'Evgeny Karpov'
-          git config --global user.email 'eukarpov@gmail.com'
           git push origin HEAD:master
 
 
