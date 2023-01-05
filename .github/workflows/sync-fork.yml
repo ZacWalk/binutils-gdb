@@ -15,14 +15,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: 'master'
+
 
       - name: Sync Fork
         run: |
-          git fetch origin master
-          git checkout master
-          git fetch origin add-CI-to-master-branch
-          git checkout origin/add-CI-to-master-branch -- .github/workflows
-          .github/workflows/scripts/sync-fork.sh
+          git remote add upstream https://github.com/bminor/binutils-gdb.git
+          git fetch upstream
+          git checkout origin/master
+          git merge upstream/master
+          git push
 
 
     
