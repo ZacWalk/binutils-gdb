@@ -1,0 +1,16 @@
+name: Sync Fork
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+jobs:
+  sync-fork:
+    name: Sync Fork
+    runs-on: ubuntu-latest
+
+    steps:
+    - env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b master
