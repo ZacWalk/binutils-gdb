@@ -1,4 +1,4 @@
-name: Makefile CI
+name: binutils-gdb CI
 
 on:
   push:
