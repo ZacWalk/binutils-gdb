@@ -11,10 +11,10 @@ on:
 
 jobs:
   sync-fork:
+    name: Sync Fork
     runs-on: ubuntu-latest
 
     steps:
-      - name: Sync Fork
-      - env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b master
+    - env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b master
