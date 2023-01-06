@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *"
-  push:
-    branches: [ "aarch64-pe-dev" ]
-  pull_request:
-    branches: [ "aarch64-pe-dev" ]
 
 jobs:
   sync-fork:
