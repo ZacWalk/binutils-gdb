@@ -5,6 +5,12 @@ on:
     branches: [ "aarch64-pe-dev", "master" ]
   pull_request:
     branches: [ "aarch64-pe-dev" ]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: false
+        type: string
 
 jobs:
   build-aarch64:
@@ -13,6 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.branch }}
     
     - name: configure
       run: ./configure --target=aarch64-pe --prefix="$HOME/cross"
@@ -26,6 +34,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.branch }}
     
     - name: configure
       run: ./configure --enable-targets=all
@@ -39,6 +49,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.branch }}
 
     - name: Testing GMP(GCC)
-      run: C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
+      run: |
+        git checkout aarch64-pe-dev -- .github\workflows
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
