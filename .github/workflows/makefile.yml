@@ -54,5 +54,5 @@ jobs:
 
     - name: Testing GMP(GCC)
       run: |
-        git checkout aarch64-pe-dev -- 
+        git checkout aarch64-pe-dev -- .github\workflows
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
