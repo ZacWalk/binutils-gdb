@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{ inputs.branch }}
+        ref: ${{ inputs.branch || github.ref }}
     
     - name: configure
       run: ./configure --target=aarch64-pe --prefix="$HOME/cross"
@@ -35,7 +35,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{ inputs.branch }}
+        ref: ${{ inputs.branch || github.ref }}
     
     - name: configure
       run: ./configure --enable-targets=all
