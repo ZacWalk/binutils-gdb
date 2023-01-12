@@ -21,7 +21,7 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     mkdir -p $workspace_folder
     cd $workspace_folder
     sudo apt-get update
-    sudo apt-get -y install build-essential binutils-for-build texinfo bison flex zlib1g-dev libgmp-dev dejagnu
+    sudo apt-get -y install build-essential binutils-for-build texinfo bison flex zlib1g-dev libgmp-dev dejagnu libmpfr-dev
     git clone ${gcc_remote_url}
     cd binutils-gdb
     git fetch origin $rev_reference:pullrequest
