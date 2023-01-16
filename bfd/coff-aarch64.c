@@ -349,6 +349,11 @@ static const reloc_howto_type arm64_reloc_howto_secrel = HOWTO (IMAGE_REL_ARM64_
 	 coff_aarch64_secrel_reloc, "IMAGE_REL_ARM64_SECREL",
 	 false, 0xffffffff, 0xffffffff, false);
 
+static const reloc_howto_type arm64_reloc_howto_secidx = HOWTO (IMAGE_REL_ARM64_SECTION, 0, 1, 16, false, 0,
+	 complain_overflow_bitfield,
+	 NULL, "IMAGE_REL_ARM64_SECTION",
+	 true, 0xffffffff, 0xffffffff, true);
+
 static const reloc_howto_type* const arm64_howto_table[] = {
      &arm64_reloc_howto_abs,
      &arm64_reloc_howto_64,
@@ -362,7 +367,8 @@ static const reloc_howto_type* const arm64_howto_table[] = {
      &arm64_reloc_howto_branch14,
      &arm64_reloc_howto_pgoff12a,
      &arm64_reloc_howto_32nb,
-     &arm64_reloc_howto_secrel
+     &arm64_reloc_howto_secrel,
+     &arm64_reloc_howto_secidx
 };
 
 #ifndef NUM_ELEM
@@ -409,6 +415,8 @@ coff_aarch64_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED, bfd_reloc_code_real
     return &arm64_reloc_howto_32nb;
   case BFD_RELOC_32_SECREL:
     return &arm64_reloc_howto_secrel;
+  case BFD_RELOC_16_SECIDX:
+    return &arm64_reloc_howto_secidx;
   default:
     BFD_FAIL ();
     return NULL;
@@ -465,6 +473,8 @@ coff_aarch64_rtype_lookup (unsigned int code)
       return &arm64_reloc_howto_32nb;
     case IMAGE_REL_ARM64_SECREL:
       return &arm64_reloc_howto_secrel;
+    case IMAGE_REL_ARM64_SECTION:
+      return &arm64_reloc_howto_secidx;
     default:
       BFD_FAIL ();
       return NULL;
@@ -853,6 +863,65 @@ coff_pe_aarch64_relocate_section (bfd *output_bfd,
 	    bfd_putl32 (val, contents + rel->r_vaddr);
 	    rel->r_type = IMAGE_REL_ARM64_ABSOLUTE;
 
+	    break;
+	  }
+
+	case IMAGE_REL_ARM64_SECTION:
+	  {
+	    asection *s;
+	    uint16_t idx = 0, i = 1;
+	    /* Make sure that _bfd_coff_generic_relocate_section won't parse
+	    this reloc after us.  */
+	    rel->r_type = 0;
+
+	    symndx = rel->r_symndx;
+
+	    if (symndx < 0
+	      || (unsigned long) symndx >= obj_raw_syment_count (input_bfd))
+	    	continue;
+
+	    h = obj_coff_sym_hashes (input_bfd)[symndx];
+
+	    if (h == NULL)
+	    sec = sections[symndx];
+	    else
+	    {
+	      if (h->root.type == bfd_link_hash_defined
+		  || h->root.type == bfd_link_hash_defweak)
+		{
+		  /* Defined weak symbols are a GNU extension.  */
+		  sec = h->root.u.def.section;
+		}
+	      else
+		{
+		  sec = NULL;
+		}
+	    }
+
+	    if (!sec)
+	      continue;
+
+	    if (bfd_is_abs_section (sec))
+	      continue;
+
+	    if (discarded_section (sec))
+	      continue;
+
+	    s = output_bfd->sections;
+	    while (s)
+	    {
+	      if (s == sec->output_section)
+		{
+		  idx = i;
+		  break;
+		}
+
+	      i++;
+	      s = s->next;
+	    }
+
+	    bfd_putl16 (idx, contents + rel->r_vaddr - input_section->vma);
+	    rel->r_type = IMAGE_REL_ARM64_ABSOLUTE;
 	    break;
 	  }
 
