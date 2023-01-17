@@ -45,4 +45,4 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     mkdir -p $gmp_object_folder
 ENDSSH
 
-./vcpkg.exe install gmp:arm64-windows
+./vcpkg.exe install gmp:arm64-windows  --binarysource=clear --x-asset-sources=clear
