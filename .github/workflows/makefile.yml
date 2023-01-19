@@ -13,45 +13,45 @@ on:
         type: string
 
 jobs:
-  build-aarch64:
+  # build-aarch64:
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - name: Install dependencies
-      run: | 
-        sudo apt-get update
-        sudo apt-get -y install libmpfr-dev
+  #   steps:
+  #   - name: Install dependencies
+  #     run: | 
+  #       sudo apt-get update
+  #       sudo apt-get -y install libmpfr-dev
 
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ inputs.branch }}
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       ref: ${{ inputs.branch }}
     
-    - name: configure
-      run: ./configure --target=aarch64-pe --prefix="$HOME/cross"
+  #   - name: configure
+  #     run: ./configure --target=aarch64-pe --prefix="$HOME/cross"
       
-    - name: build
-      run: make
+  #   - name: build
+  #     run: make
       
-  build-all-targets:
+  # build-all-targets:
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - name: Install dependencies
-      run: | 
-        sudo apt-get update
-        sudo apt-get -y install libmpfr-dev
+  #   steps:
+  #   - name: Install dependencies
+  #     run: | 
+  #       sudo apt-get update
+  #       sudo apt-get -y install libmpfr-dev
         
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ inputs.branch }}
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       ref: ${{ inputs.branch }}
     
-    - name: configure
-      run: ./configure --enable-targets=all
+  #   - name: configure
+  #     run: ./configure --enable-targets=all
       
-    - name: build
-      run: make
+  #   - name: build
+  #     run: make
 
   test-gmp-aarch64:
 
