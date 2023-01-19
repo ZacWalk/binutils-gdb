@@ -35,7 +35,6 @@ ENDSSH
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 
-
 cat ../.github/workflows/patches/gmp-gcc-vcpkg.patch | sed -e "s/^++runner_workspace=/++runner_workspace=\"${workspace_folder//\//\\/}\"/" | git apply --whitespace=fix
 ./bootstrap-vcpkg.sh
 
