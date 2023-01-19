@@ -34,7 +34,7 @@ ENDSSH
 
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
-git checkout e46521db0
+
 
 cat ../.github/workflows/patches/gmp-gcc-vcpkg.patch | sed -e "s/^++runner_workspace=/++runner_workspace=\"${workspace_folder//\//\\/}\"/" | git apply --whitespace=fix
 ./bootstrap-vcpkg.sh
@@ -45,4 +45,4 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     mkdir -p $gmp_object_folder
 ENDSSH
 
-./vcpkg.exe install gmp:arm64-windows  --binarysource=clear --x-asset-sources=clear
+./vcpkg.exe install gmp:arm64-windows
