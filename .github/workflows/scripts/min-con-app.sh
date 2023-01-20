@@ -1,6 +1,5 @@
 #!/bin/bash
 
-. ../../environment.sh # import variables from environment script
 set -ex # stop bash script on error
 
 min_con_app_folder="$workspace_folder/build/min-con-app"

@@ -46,4 +46,4 @@ gmp_object_folder="$workspace_folder/build/gmp"
 
 # ./vcpkg.exe install gmp:arm64-windows
 
-.github/workflows/scripts/min-con-app.sh
+. .github/workflows/scripts/min-con-app.sh
