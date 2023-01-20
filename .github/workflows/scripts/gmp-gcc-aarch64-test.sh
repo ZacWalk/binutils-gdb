@@ -21,7 +21,7 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     mkdir -p $workspace_folder
     cd $workspace_folder
     sudo apt-get update
-    sudo apt-get -y install build-essential binutils-for-build texinfo bison flex zlib1g-dev libgmp-dev dejagnu
+    sudo apt-get -y install build-essential binutils-for-build texinfo bison flex zlib1g-dev libgmp-dev dejagnu libmpfr-dev
     git clone ${gcc_remote_url}
     cd binutils-gdb
     git fetch origin $rev_reference:pullrequest
@@ -34,7 +34,6 @@ ENDSSH
 
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
-git checkout e46521db0
 
 cat ../.github/workflows/patches/gmp-gcc-vcpkg.patch | sed -e "s/^++runner_workspace=/++runner_workspace=\"${workspace_folder//\//\\/}\"/" | git apply --whitespace=fix
 ./bootstrap-vcpkg.sh
