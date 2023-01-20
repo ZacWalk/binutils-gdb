@@ -13,11 +13,17 @@ on:
         type: string
 
 jobs:
+
   build-all-targets:
 
     runs-on: ubuntu-latest
 
     steps:
+    - name: Install dependencies
+      run: | 
+        sudo apt-get update
+        sudo apt-get -y install libmpfr-dev
+        
     - uses: actions/checkout@v3
       with:
         ref: ${{ inputs.branch }}
@@ -39,5 +45,4 @@ jobs:
 
     - name: Testing GMP(GCC)
       run: |
-        git checkout aarch64-pe-dev -- .github\workflows
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
