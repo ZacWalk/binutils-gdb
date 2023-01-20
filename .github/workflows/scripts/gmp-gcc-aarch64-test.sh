@@ -46,4 +46,6 @@ ENDSSH
 
 ./vcpkg.exe install gmp:arm64-windows
 
+cd ..
+
 . .github/workflows/scripts/min-con-app.sh
