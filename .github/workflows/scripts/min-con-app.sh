@@ -13,7 +13,7 @@ ENDSSH
 git clone https://github.com/Windows-on-ARM-Experiments/research.git
 
 scp -i $gcc_identity ./research/min-exe/con-app-aarch64.s $gcc_destination:$min_con_app_folder
-ssh -i $gcc_identity $gcc_destination "$gas_folder/as-new -o $min_con_app_folder/con-app-aarch64.o $min_con_app_folder/con-app-aarch64.s"
+ssh -i $gcc_identity $gcc_destination "$gcc_build_folder/gas/as-new -o $min_con_app_folder/con-app-aarch64.o $min_con_app_folder/con-app-aarch64.s"
 scp -i $gcc_identity $gcc_destination:$min_con_app_folder/con-app-aarch64.o ./research/
 
 cd ./research/
