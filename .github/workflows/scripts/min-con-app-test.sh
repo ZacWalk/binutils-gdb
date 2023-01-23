@@ -17,4 +17,9 @@ ssh -i $gcc_identity $gcc_destination "$gcc_build_folder/gas/as-new -o $min_con_
 scp -i $gcc_identity $gcc_destination:$min_con_app_folder/con-app-aarch64.o ./research/
 
 cd ./research/
+
 LINK.exe con-app-aarch64.o kernel32.Lib /SUBSYSTEM:CONSOLE
+
+./con-app-aarch64.exe
+
+powershell.exe ../.github/workflows/scripts/assert-min-con-app.ps1

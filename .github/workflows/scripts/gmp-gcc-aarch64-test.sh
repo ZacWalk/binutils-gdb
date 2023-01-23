@@ -48,4 +48,4 @@ ENDSSH
 
 cd ..
 
-. .github/workflows/scripts/min-con-app.sh
+. .github/workflows/scripts/min-con-app-test.sh
