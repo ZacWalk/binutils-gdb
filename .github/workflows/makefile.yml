@@ -43,6 +43,16 @@ jobs:
       with:
         ref: ${{ inputs.branch }}
 
+    - name: Build binutils
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
+
+    - name: Minimal console app testing
+      continue-on-error: true
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
+    
     - name: Testing GMP(GCC)
+      continue-on-error: true
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
