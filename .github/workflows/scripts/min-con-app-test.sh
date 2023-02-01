@@ -15,7 +15,7 @@ git clone https://github.com/Windows-on-ARM-Experiments/research.git
 
 scp -i $gcc_identity ./research/min-exe/con-app-aarch64.s $gcc_destination:$minconapp_object_folder
 ssh -i $gcc_identity $gcc_destination "$gcc_build_folder/gas/as-new -o $minconapp_object_folder/con-app-aarch64.o $minconapp_object_folder/con-app-aarch64.s"
-scp -i $gcc_identity $gcc_destination:$min_con_app_folder/con-app-aarch64.o ./research/
+scp -i $gcc_identity $gcc_destination:$minconapp_object_folder/con-app-aarch64.o ./research/
 
 cd ./research/
 
