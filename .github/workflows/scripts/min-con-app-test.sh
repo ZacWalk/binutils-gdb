@@ -24,9 +24,12 @@ research_dir=$(pwd)
 cd "C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\MSVC"/*/bin/Hostarm64/arm64/
 link_exe_path=$(pwd)/link.exe
 
+cd "C:\Program Files (x86)\Windows Kits\10\Lib"/*/um/arm64/
+kernel32_path=$(pwd)/kernel32.Lib
+
 cd $research_dir
 
-"$link_exe_path" con-app-aarch64.o kernel32.Lib /SUBSYSTEM:CONSOLE
+"$link_exe_path" con-app-aarch64.o "$kernel32_path" /SUBSYSTEM:CONSOLE
 
 ./con-app-aarch64.exe
 
