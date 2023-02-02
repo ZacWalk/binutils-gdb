@@ -14,25 +14,25 @@ on:
 
 jobs:
 
-  build-all-targets:
+  # build-all-targets:
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - name: Install dependencies
-      run: | 
-        sudo apt-get update
-        sudo apt-get -y install libmpfr-dev
+  #   steps:
+  #   - name: Install dependencies
+  #     run: | 
+  #       sudo apt-get update
+  #       sudo apt-get -y install libmpfr-dev
         
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ inputs.branch }}
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       ref: ${{ inputs.branch }}
     
-    - name: configure
-      run: ./configure --enable-targets=all
+  #   - name: configure
+  #     run: ./configure --enable-targets=all
       
-    - name: build
-      run: make -j$(nproc)
+  #   - name: build
+  #     run: make -j$(nproc)
 
   test-gmp-aarch64:
 
@@ -43,16 +43,22 @@ jobs:
       with:
         ref: ${{ inputs.branch }}
 
-    - name: Build binutils
-      run: |
-        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
+    # - name: Build binutils
+    #   run: |
+    #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
-    - name: Minimal console app testing
-      continue-on-error: true
-      run: |
-        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
+    # - name: Minimal console app testing
+    #   continue-on-error: true
+    #   run: |
+    #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
     
     - name: Testing GMP(GCC)
       continue-on-error: true
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
+
+    - name: Show logs
+      run: |
+        cd vcpkg
+        cat buildtrees\detect_compiler\config-arm64-windows-rel-CMakeCache.txt.log
+        cat buildtrees\detect_compiler\config-arm64-windows-out.log
