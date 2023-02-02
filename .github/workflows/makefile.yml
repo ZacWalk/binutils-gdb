@@ -36,7 +36,7 @@ jobs:
 
   test-gmp-aarch64:
 
-    runs-on: [self-hosted, Windows, ARM64]
+    runs-on: [self-hosted, Windows, ARM64, GCC]
 
     steps:
     - uses: actions/checkout@v3
