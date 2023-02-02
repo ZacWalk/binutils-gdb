@@ -62,3 +62,5 @@ jobs:
         cd vcpkg
         cat buildtrees\detect_compiler\config-arm64-windows-rel-CMakeCache.txt.log
         cat buildtrees\detect_compiler\config-arm64-windows-out.log
+        cat buildtrees/detect_compiler/arm64-windows-rel/CMakeFiles/CMakeOutput.log
+        cat buildtrees/detect_compiler/arm64-windows-rel/CMakeFiles/CMakeError.log
