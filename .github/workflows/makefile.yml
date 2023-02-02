@@ -47,6 +47,11 @@ jobs:
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
+    - name: Testing OpenBLAS
+      continue-on-error: true
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
+
     - name: Minimal console app testing
       continue-on-error: true
       run: |
