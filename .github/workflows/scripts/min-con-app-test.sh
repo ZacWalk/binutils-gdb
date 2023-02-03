@@ -21,10 +21,14 @@ cd ./research/
 
 research_dir=$(pwd)
 
-cd "C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\MSVC"/*/bin/Hostarm64/arm64/
+cd "C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\MSVC"
+cd $(ls -d */|tail -n 1)
+cd ./bin/Hostarm64/arm64/
 link_exe_path=$(pwd)/link.exe
 
-cd "C:\Program Files (x86)\Windows Kits\10\Lib"/*/um/arm64/
+cd "C:\Program Files (x86)\Windows Kits\10\Lib"
+cd $(ls -d */|tail -n 1)
+cd ./um/arm64/
 kernel32_path=$(pwd)/kernel32.Lib
 
 cd $research_dir
