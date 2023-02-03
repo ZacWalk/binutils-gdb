@@ -69,4 +69,4 @@ ls build
 ls build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
 
 cd build
-cmake --build . --config Release
+cmd.exe //C cmake --build . --config Release

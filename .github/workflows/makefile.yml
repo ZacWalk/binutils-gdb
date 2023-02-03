@@ -34,7 +34,7 @@ jobs:
     - name: build
       run: make -j$(nproc)
 
-  test-gmp-aarch64:
+  test-binutils:
 
     runs-on: [self-hosted, Windows, ARM64, GCC]
 
@@ -48,16 +48,16 @@ jobs:
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
     - name: Testing OpenBLAS
-      continue-on-error: true
+      if: ${{ always() }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
 
     - name: Minimal console app testing
-      continue-on-error: true
+      if: ${{ always() }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
     
     - name: Testing GMP(GCC)
-      continue-on-error: true
+      if: ${{ always() }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
