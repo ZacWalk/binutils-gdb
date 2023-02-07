@@ -39,9 +39,9 @@ jobs:
     runs-on: [self-hosted, Windows, ARM64, GCC]
 
     steps:
-    # - uses: actions/checkout@v3
-    #   with:
-    #     ref: ${{ inputs.branch }}
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.branch }}
 
     # - name: Build binutils
     #   id: binutils-build
