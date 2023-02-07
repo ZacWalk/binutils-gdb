@@ -49,7 +49,6 @@ jobs:
     #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
     - name: Testing OpenBLAS
-      if: ${{ always() && steps.binutils-build.outcome == 'success' }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
         cd openblas/build
