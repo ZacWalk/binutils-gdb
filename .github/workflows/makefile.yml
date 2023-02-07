@@ -49,9 +49,12 @@ jobs:
     #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
     - name: Testing OpenBLAS
-      shell: cmd
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
+
+    - name: Testing OpenBLAS
+      shell: cmd
+      run: |
         cd openblas/build
         call "%ProgramFiles%\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvarsall.bat" arm64
         cmake ..  -G Ninja -DCMAKE_C_COMPILER=clang -DBUILD_WITHOUT_LAPACK=1 -DNOFORTRAN=1 -DDYNAMIC_ARCH=0 -DTARGET=ARMV8 -DARCH=arm64 -DBINARY=64 -DUSE_OPENMP=0 -DCMAKE_SYSTEM_PROCESSOR=ARM64 -DCMAKE_CROSSCOMPILING=0 -DCMAKE_SYSTEM_NAME=Windows
