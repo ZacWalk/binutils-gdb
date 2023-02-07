@@ -48,13 +48,6 @@ jobs:
     #   run: |
     #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
-
-    - name: Link
-      shell: cmd
-      run: |
-        call "%ProgramFiles%\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvarsall.bat" arm64
-        LINK
-
     - name: Testing OpenBLAS
       shell: cmd
       run: |
