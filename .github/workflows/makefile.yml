@@ -54,6 +54,13 @@ jobs:
 
     - name: Testing OpenBLAS
       shell: cmd
+      continue-on-error: true
+      run: |
+        call "%ProgramFiles%\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvarsarm64.bat"
+        clang
+
+    - name: Testing OpenBLAS
+      shell: cmd
       run: |
         cd openblas/build
         call "%ProgramFiles%\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvarsarm64.bat"
