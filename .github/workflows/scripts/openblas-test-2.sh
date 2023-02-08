@@ -30,7 +30,7 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
 
     # read specific line from file into variable
     line=\$(sed -n '/include/=' build/kernel/CMakeFiles/camax_k.S)
-    path_to_replace=$(sed -n "\${line}p" build/kernel/CMakeFiles/camax_k.S)
+    path_to_replace=\$(sed -n "${line}p" build/kernel/CMakeFiles/camax_k.S)
     echo \$path_to_replace
     echo \$line
 
