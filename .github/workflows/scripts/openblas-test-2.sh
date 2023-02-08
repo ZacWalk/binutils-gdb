@@ -30,26 +30,26 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
 
     # read specific line from file into variable
     line=\$(sed -n '/include/=' build/kernel/CMakeFiles/camax_k.S)
-    path_to_replace=\$(sed -n "${line}p" build/kernel/CMakeFiles/camax_k.S)
+    path_to_replace=\$(sed -n "\${line}p" build/kernel/CMakeFiles/camax_k.S)
     echo \$path_to_replace
     echo \$line
 
-    # #remove prefix '#include ' from path_to_replace
-    # path_to_replace=${path_to_replace#'#include "'}
+    #remove prefix '#include ' from path_to_replace
+    path_to_replace=\${path_to_replace#'#include "'}
 
-    # #remove suffix 'zamax.S' from path_to_replace
-    # path_to_replace=${path_to_replace%'zamax.S"'}
+    #remove suffix 'zamax.S' from path_to_replace
+    path_to_replace=\${path_to_replace%'zamax.S"'}
 
-    # #find path_to_replace in all .S files in build/kernel/CMakeFiles folder and replace it with base path
-    # find ./build/kernel/CMakeFiles -name "*.S" -exec sed -i "s|$path_to_replace|$root_dir/kernel/arm64/|g" {} \;
+    #find path_to_replace in all .S files in build/kernel/CMakeFiles folder and replace it with base path
+    find ./build/kernel/CMakeFiles -name "*.S" -exec sed -i "s|\$path_to_replace|\$root_dir/kernel/arm64/|g" {} \;
 
-    # mkdir -p ./build/gas
+    mkdir -p ./build/gas
 
-    # for file in ./build/kernel/CMakeFiles/*.S; do
-    #     gcc -I$root_dir -E $root_dir/build/kernel/CMakeFiles/$(basename $file) > $root_dir/build/gas/$(basename $file).s;
-    #     $gcc_build_folder/gas/as-new $root_dir/build/gas/$(basename $file).s -o $root_dir/build/gas/$(basename $file).S.obj;
-    # done
-    # rm ./build/gas/*.s
+    for file in ./build/kernel/CMakeFiles/*.S; do
+        gcc -I\$root_dir -E \$root_dir/build/kernel/CMakeFiles/$(basename \$file) > \$root_dir/build/gas/$(basename \$file).s;
+        \$gcc_build_folder/gas/as-new \$root_dir/build/gas/$(basename \$file).s -o \$root_dir/build/gas/$(basename \$file).S.obj;
+    done
+    rm ./build/gas/*.s
 ENDSSH
 
 # scp -i $gcc_identity -r $gcc_destination:$openblas_folder/build/gas/ ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
