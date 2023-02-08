@@ -53,25 +53,6 @@ jobs:
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
 
     - name: Testing OpenBLAS
-      continue-on-error: true
-      run: |
-        clang
-
-    - name: Testing OpenBLAS
-      shell: cmd
-      continue-on-error: true
-      run: |
-        clang
-
-    - name: Testing OpenBLAS
-      shell: cmd
-      continue-on-error: true
-      run: |
-        call "%ProgramFiles%\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvarsarm64.bat"
-        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\Llvm\ARM64\bin 
-        clang
-
-    - name: Testing OpenBLAS
       shell: cmd
       run: |
         cd openblas/build
@@ -79,7 +60,9 @@ jobs:
         set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\Llvm\ARM64\bin 
         cmake ..  -G Ninja -DCMAKE_C_COMPILER=clang -DBUILD_WITHOUT_LAPACK=1 -DNOFORTRAN=1 -DDYNAMIC_ARCH=0 -DTARGET=ARMV8 -DARCH=arm64 -DBINARY=64 -DUSE_OPENMP=0 -DCMAKE_SYSTEM_PROCESSOR=ARM64 -DCMAKE_CROSSCOMPILING=0 -DCMAKE_SYSTEM_NAME=Windows
 
-
+    - name: Testing OpenBLAS
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test-2.sh
     # - name: Minimal console app testing
     #   if: ${{ always() && steps.binutils-build.outcome == 'success' }}
     #   run: |
