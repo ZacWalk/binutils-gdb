@@ -5,6 +5,8 @@ set -ex # stop bash script on error
 
 openblas_folder="$workspace_folder/build/openblas"
 
+ls ./openblas/
+
 scp -i $gcc_identity -r ./openblas/ $gcc_destination:$openblas_folder
 
 ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
@@ -12,6 +14,7 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     
     ls 
     cd $openblas_folder
+    ls 
 
     root_dir=$(pwd)
 
