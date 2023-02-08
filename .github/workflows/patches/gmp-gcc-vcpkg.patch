@@ -1,72 +1,3 @@
-diff --git a/ports/gmp/gcc.patch b/ports/gmp/gcc.patch
-new file mode 100644
-index 000000000..2c73be304
---- /dev/null
-+++ b/ports/gmp/gcc.patch
-@@ -0,0 +1,63 @@
-+diff --git a/mpn/m4-ccas b/mpn/m4-ccas
-+index 16d80c6..b419781 100644
-+--- a/mpn/m4-ccas
-++++ b/mpn/m4-ccas
-+@@ -100,8 +100,16 @@ fi
-+ echo "$M4 $DEFS $ASM >$TMP"
-+ $M4 $DEFS $ASM >$TMP || exit
-+ 
-+-echo "$CC"
-+-$CC || exit
-++set -ex
-++runner_workspace=
-++gmp_object_folder="$runner_workspace/build/gmp"
-++gas_folder="$runner_workspace/build/binutils-gdb/gas"
-++echo Compiling $TMP with GCC binutils to .libs/$BASENAME.obj
-++pwd
-++. ../../../../../../../environment.sh
-++"$scp" -i $gcc_identity $TMP $gcc_destination:$gmp_object_folder
-++"$ssh" -i $gcc_identity $gcc_destination "$gas_folder/as-new -o $gmp_object_folder/$TMP.o $gmp_object_folder/$TMP"
-++"$scp" -i $gcc_identity $gcc_destination:$gmp_object_folder/$TMP.o .libs/$BASENAME.obj
-+ 
-+ # Comment this out to preserve .s intermediates
-+ rm -f $TMP
-+diff --git a/tests/cxx/clocale.c b/tests/cxx/clocale.c
-+index 7f7c36e..c142ab5 100644
-+--- a/tests/cxx/clocale.c
-++++ b/tests/cxx/clocale.c
-+@@ -41,7 +41,7 @@ the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
-+ 
-+ extern char point_string[];
-+ 
-+-#if HAVE_LOCALECONV && ! defined __MINGW32__
-++#if ! defined HAVE_LOCALECONV && ! defined __MINGW32__
-+ struct lconv *
-+ localeconv (void)
-+ #if defined __cplusplus && defined __GLIBC__
-+diff --git a/tests/mpz/reuse.c b/tests/mpz/reuse.c
-+index a8f2201..2557608 100644
-+--- a/tests/mpz/reuse.c
-++++ b/tests/mpz/reuse.c
-+@@ -27,7 +27,9 @@ the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
-+ #include <stdio.h>
-+ #include <stdlib.h>
-+ #include <string.h>
-++#if HAVE_UNISTD_H
-+ #include <unistd.h>
-++#endif
-+ 
-+ #include "gmp-impl.h"
-+ #include "tests.h"
-+diff --git a/tests/spinner.c b/tests/spinner.c
-+index 13448d0..1f0b80d 100644
-+--- a/tests/spinner.c
-++++ b/tests/spinner.c
-+@@ -25,6 +25,8 @@ the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
-+ #include <stdlib.h>
-+ #if HAVE_UNISTD_H
-+ #include <unistd.h>     /* for isatty */
-++#else
-++#define STDOUT_FILENO 1
-+ #endif
-+ 
-+ #include "gmp-impl.h"
 diff --git a/ports/gmp/portfile.cmake b/ports/gmp/portfile.cmake
 index 1d0020bb5..e6c3ade91 100644
 --- a/ports/gmp/portfile.cmake
@@ -84,7 +15,7 @@ index 1d0020bb5..e6c3ade91 100644
          subdirs.patch
          msvc_symbol.patch
          arm64-coff.patch
-+        gcc.patch
++
          "${ARM64PATCH}"
  )
  
