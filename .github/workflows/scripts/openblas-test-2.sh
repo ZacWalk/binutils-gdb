@@ -20,6 +20,10 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     
     cd $openblas_folder
 
+    ls
+
+    [ -d openblas ] && cd openblas
+
     root_dir=$(pwd)
 
     # copy config.h from build/ to root

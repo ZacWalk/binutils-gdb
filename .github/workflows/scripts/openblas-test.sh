@@ -3,13 +3,7 @@
 set -ex # stop bash script on error
 . .github/workflows/scripts/base.sh
 
-openblas_folder="$workspace_folder/build/openblas"
 
-ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
-    set -e # stop bash script on error
-    [ -d $openblas_folder ] && rm -r $openblas_folder
-    mkdir -p $openblas_folder
-ENDSSH
 
 git clone --depth 1 https://github.com/xianyi/OpenBLAS.git openblas
 
