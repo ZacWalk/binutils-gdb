@@ -18,24 +18,22 @@ scp -i $gcc_identity -r ./openblas/ $gcc_destination:$openblas_folder
 ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     set -e # stop bash script on error
     
-    ls
-
     cd $openblas_folder
-
-    ls
 
     [ -d openblas ] && cd openblas
 
-    ls
-
+    pwd
     root_dir=$(pwd)
+    echo $root_dir
 
-    # # copy config.h from build/ to root
-    # cp build/config.h .
+    # copy config.h from build/ to root
+    cp build/config.h .
 
-    # # read specific line from file into variable
-    # line=$(sed -n '/include/=' build/kernel/CMakeFiles/camax_k.S)
-    # path_to_replace=$(sed -n "${line}p" build/kernel/CMakeFiles/camax_k.S)
+    # read specific line from file into variable
+    line=$(sed -n '/include/=' build/kernel/CMakeFiles/camax_k.S)
+    path_to_replace=$(sed -n "${line}p" build/kernel/CMakeFiles/camax_k.S)
+    echo $path_to_replace
+    echo $line
 
     # #remove prefix '#include ' from path_to_replace
     # path_to_replace=${path_to_replace#'#include "'}
