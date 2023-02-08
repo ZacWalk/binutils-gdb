@@ -3,11 +3,14 @@
 set -ex # stop bash script on error
 . .github/workflows/scripts/base.sh
 
+openblas_folder="$workspace_folder/build/openblas"
+
 scp -i $gcc_identity -r ./openblas/ $gcc_destination:$openblas_folder
 
 ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     set -e # stop bash script on error
-
+    
+    ls 
     cd $openblas_folder
 
     root_dir=$(pwd)
