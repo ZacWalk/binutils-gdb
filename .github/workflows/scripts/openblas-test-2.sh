@@ -45,7 +45,7 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
 
     for file in ./build/kernel/CMakeFiles/*.S; do
         gcc -I\$root_dir -E \$root_dir/build/kernel/CMakeFiles/\$(basename \$file) > \$root_dir/build/gas/\$(basename \$file).s;
-        \$gcc_build_folder/gas/as-new \$root_dir/build/gas/\$(basename \$file).s -o \$root_dir/build/gas/\$(basename \$file).S.obj;
+        $gcc_build_folder/gas/as-new \$root_dir/build/gas/\$(basename \$file).s -o \$root_dir/build/gas/\$(basename \$file).S.obj;
     done
     rm ./build/gas/*.s
 ENDSSH
