@@ -18,9 +18,7 @@ scp -i $gcc_identity -r ./openblas/ $gcc_destination:$openblas_folder
 ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     set -e # stop bash script on error
     
-    cd $openblas_folder
-
-    [ -d openblas ] && cd openblas
+    cd $openblas_folder/openblas
 
     root_dir=\$(pwd)
     echo \$root_dir
@@ -52,15 +50,15 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     rm ./build/gas/*.s
 ENDSSH
 
-# scp -i $gcc_identity -r $gcc_destination:$openblas_folder/build/gas/ ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
+scp -i $gcc_identity -r $gcc_destination:$openblas_folder/openblas/build/gas/ ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
 
-# cd ./openblas
+cd ./openblas
 
-# #remove all lines and 7 lines after starting with 'build' and containing '.S.obj:' from build/build.ninja
-# sed -i '/build/,$ {/\.S\.obj:/ {N;N;N;N;N;N;N;d;}}' build/build.ninja
+#remove all lines and 7 lines after starting with 'build' and containing '.S.obj:' from build/build.ninja
+sed -i '/build/,$ {/\.S\.obj:/ {N;N;N;N;N;N;N;d;}}' build/build.ninja
 
-# ls build
-# ls build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
+ls build
+ls build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
 
-# cd build
-# cmd.exe //C cmake --build . --config Release
+cd build
+cmd.exe //C cmake --build . --config Release
