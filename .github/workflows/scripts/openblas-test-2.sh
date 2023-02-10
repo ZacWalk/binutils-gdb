@@ -52,13 +52,13 @@ ENDSSH
 
 scp -i $gcc_identity -r $gcc_destination:$openblas_folder/openblas/build/gas/ ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
 
+cp ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/gas/*.S.obj /openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
+rm -r ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/gas
+
 cd ./openblas
 
 #remove all lines and 7 lines after starting with 'build' and containing '.S.obj:' from build/build.ninja
 sed -i '/build/,$ {/\.S\.obj:/ {N;N;N;N;N;N;N;d;}}' build/build.ninja
-
-ls build
-ls build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
 
 cd build
 cmd.exe //C cmake --build . --config Release
