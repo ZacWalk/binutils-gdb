@@ -52,7 +52,7 @@ ENDSSH
 
 scp -i $gcc_identity -r $gcc_destination:$openblas_folder/openblas/build/gas/ ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
 
-cp ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/gas/*.S.obj /openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
+cp ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/gas/*.S.obj ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/
 rm -r ./openblas/build/kernel/CMakeFiles/kernel.dir/CMakeFiles/gas
 
 cd ./openblas
