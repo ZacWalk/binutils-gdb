@@ -48,8 +48,23 @@ jobs:
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
-    - name: Testing OpenBLAS
+    - name: Clone OpenBLAS
+      id: openblas-setup
       if: ${{ always() && steps.binutils-build.outcome == 'success' }}
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-clone.sh
+
+    - name: Configure OpenBLAS
+      id: openblas-configure
+      if: ${{ always() && steps.openblas-setup.outcome == 'success' }}
+      shell: cmd
+      run: |
+        cd openblas/build
+        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\Llvm\ARM64\bin 
+        cmake ..  -G Ninja -DCMAKE_C_COMPILER=clang -DBUILD_WITHOUT_LAPACK=1 -DNOFORTRAN=1 -DDYNAMIC_ARCH=0 -DTARGET=ARMV8 -DARCH=arm64 -DBINARY=64 -DUSE_OPENMP=0 -DCMAKE_SYSTEM_PROCESSOR=ARM64 -DCMAKE_CROSSCOMPILING=0 -DCMAKE_SYSTEM_NAME=Windows
+
+    - name: Build and test OpenBLAS
+      if: ${{ always() && steps.openblas-configure.outcome == 'success' }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
 
@@ -59,6 +74,16 @@ jobs:
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
     
     - name: Testing GMP(GCC)
+      id: gmp-test
       if: ${{ always() && steps.binutils-build.outcome == 'success' }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
+
+    - name: Extract VCPKG logs
+      if: ${{ always() && steps.gmp-test.outcome != 'success' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: vcpkg-gmp-logs
+        retention-days: 3
+        path: |
+          vcpkg\buildtrees\gmp\*.log
