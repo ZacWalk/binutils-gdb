@@ -62,3 +62,5 @@ sed -i '/build/,$ {/\.S\.obj:/ {N;N;N;N;N;N;N;d;}}' build/build.ninja
 
 cd build
 cmd.exe //C cmake --build . --config Release
+cmd.exe //C ctest
+./utest/openblas_utest.exe
