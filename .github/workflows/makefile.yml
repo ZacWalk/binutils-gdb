@@ -50,7 +50,7 @@ jobs:
 
     - name: Configure OpenBLAS
       id: openblas-configure
-      if: ${{ always() && steps.binutils-build.outcome == 'success' }}
+      # if: ${{ always() && steps.binutils-build.outcome == 'success' }}
       shell: cmd
       run: |
         git clone --depth 1 https://github.com/xianyi/OpenBLAS.git openblas
