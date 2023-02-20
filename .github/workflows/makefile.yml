@@ -43,15 +43,15 @@ jobs:
       with:
         ref: ${{ inputs.branch }}
 
-    # - name: Build binutils
-    #   id: binutils-build
-    #   run: |
-    #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
+    - name: Build binutils
+      id: binutils-build
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
-    # - name: Minimal console app testing
-    #   if: ${{ always() && steps.binutils-build.outcome == 'success' }}
-    #   run: |
-    #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
+    - name: Minimal console app testing
+      if: ${{ always() && steps.binutils-build.outcome == 'success' }}
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
 
     # - name: Configure OpenBLAS
     #   id: openblas-configure
@@ -72,7 +72,7 @@ jobs:
 
     - name: Testing GMP(GCC)
       id: gmp-test
-      # if: ${{ always() && steps.binutils-build.outcome == 'success' }}
+      if: ${{ always() && steps.binutils-build.outcome == 'success' }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
 
