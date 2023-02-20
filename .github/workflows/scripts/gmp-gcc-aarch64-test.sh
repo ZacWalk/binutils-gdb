@@ -7,7 +7,7 @@ gmp_object_folder="$workspace_folder/build/gmp"
 
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
-git checkout e69dd972ba64840955f46704ecce6241bf607c0f
+git checkout e46521db0
 
 cat ../.github/workflows/patches/gmp-gcc-vcpkg.patch | sed -e "s/^++runner_workspace=/++runner_workspace=\"${workspace_folder//\//\\/}\"/" | git apply --whitespace=fix
 ./bootstrap-vcpkg.sh
