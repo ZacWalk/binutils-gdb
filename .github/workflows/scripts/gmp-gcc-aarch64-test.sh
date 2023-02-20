@@ -29,11 +29,15 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     mkdir -p $gcc_build_folder
     cd $gcc_build_folder
     $gcc_source_folder/configure --target=aarch64-pe --prefix="\$HOME/cross"
-    make
+    make -j$(nproc)
 ENDSSH
 
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
+git checkout e46521db0 
+
+mkdir downloads
+cp ../.github/workflows/tools/msys-libtool-2.4.6-9-x86_64.pkg.tar.xz ./downloads
 
 cat ../.github/workflows/patches/gmp-gcc-vcpkg.patch | sed -e "s/^++runner_workspace=/++runner_workspace=\"${workspace_folder//\//\\/}\"/" | git apply --whitespace=fix
 ./bootstrap-vcpkg.sh
