@@ -18,4 +18,6 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     mkdir -p $gmp_object_folder
 ENDSSH
 
+mkdir downloads
+cp ../.github/workflows/tools/msys-libtool-2.4.6-9-x86_64.pkg.tar.xz ./downloads
 ./vcpkg.exe install gmp:arm64-windows
