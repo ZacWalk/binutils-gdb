@@ -19,5 +19,5 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     mkdir -p $gcc_build_folder
     cd $gcc_build_folder
     $gcc_source_folder/configure --target=aarch64-pe --prefix="\$HOME/cross"
-    make -j$(nproc)
+    make -j\$(nproc)
 ENDSSH
