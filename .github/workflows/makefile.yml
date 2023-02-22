@@ -53,6 +53,16 @@ jobs:
     #   run: |
     #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
 
+    - name: test
+      continue-on-error: true
+      shell: cmd
+      run: dir "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\bin"
+
+    - name: test
+      continue-on-error: true
+      shell: cmd
+      run: dir "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm"
+
     - name: Configure OpenBLAS
       id: openblas-configure
       # if: ${{ always() && steps.binutils-build.outcome == 'success' }}
