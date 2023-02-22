@@ -61,7 +61,7 @@ jobs:
     - name: test
       continue-on-error: true
       shell: cmd
-      run: dir "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64"
+      run: dir "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64\bin"
 
     - name: Configure OpenBLAS
       id: openblas-configure
