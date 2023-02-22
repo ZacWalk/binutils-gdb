@@ -53,10 +53,6 @@ jobs:
     #   run: |
     #     C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
 
-    - name: test
-      continue-on-error: true
-      run: clang
-
     - name: Configure OpenBLAS
       id: openblas-configure
       # if: ${{ always() && steps.binutils-build.outcome == 'success' }}
@@ -66,7 +62,7 @@ jobs:
         mkdir openblas\build
         "C:\Program Files\Git\bin\bash.exe" -c "sed -i '143,145d' ./openblas/common_arm64.h"
         cd openblas/build
-        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\ARM64\bin 
+        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\bin
         cmake ..  -G Ninja -DCMAKE_C_COMPILER=clang -DBUILD_WITHOUT_LAPACK=1 -DNOFORTRAN=1 -DDYNAMIC_ARCH=0 -DTARGET=ARMV8 -DARCH=arm64 -DBINARY=64 -DUSE_OPENMP=0 -DCMAKE_SYSTEM_PROCESSOR=ARM64 -DCMAKE_CROSSCOMPILING=0 -DCMAKE_SYSTEM_NAME=Windows
 
     # - name: Build and test OpenBLAS
