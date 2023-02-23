@@ -3,7 +3,7 @@ new file mode 100644
 index 000000000..2c73be304
 --- /dev/null
 +++ b/ports/gmp/gcc.patch
-@@ -0,0 +1,99 @@
+@@ -0,0 +1,96 @@
 +diff --git a/mpn/m4-ccas b/mpn/m4-ccas
 +index 16d80c6..b419781 100644
 +--- a/mpn/m4-ccas
