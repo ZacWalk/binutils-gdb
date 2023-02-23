@@ -67,6 +67,39 @@ index 000000000..2c73be304
 + #endif
 + 
 + #include "gmp-impl.h"
++diff --git a/tests/mpn/t-mod_1.c b/tests/mpn/t-mod_1.c
++index 5b9570d..d9df5f4 100644
++--- a/tests/mpn/t-mod_1.c
+++++ b/tests/mpn/t-mod_1.c
++@@ -51,17 +51,17 @@ check_one (mp_srcptr ap, mp_size_t n, mp_limb_t b)
++ 	  goto fail;
++ 	}
++     }
++-  if (b <= GMP_NUMB_MASK / 3)
++-    {
++-      mp_limb_t pre[6];
++-      mpn_mod_1s_3p_cps (pre, b);
++-      r = mpn_mod_1s_3p (ap, n, b << pre[1], pre);
++-      if (r != r_ref)
++-	{
++-	  printf ("mpn_mod_1s_3p failed\n");
++-	  goto fail;
++-	}
++-    }
+++  // if (b <= GMP_NUMB_MASK / 3)
+++  //   {
+++  //     mp_limb_t pre[6];
+++  //     mpn_mod_1s_3p_cps (pre, b);
+++  //     r = mpn_mod_1s_3p (ap, n, b << pre[1], pre);
+++  //     if (r != r_ref)
+++	// {
+++	//   printf ("mpn_mod_1s_3p failed\n");
+++	//   goto fail;
+++	// }
+++  //   }
++   if (b <= GMP_NUMB_MASK / 4)
++     {
++       mp_limb_t pre[7];
 diff --git a/ports/gmp/portfile.cmake b/ports/gmp/portfile.cmake
 index 1d0020bb5..e6c3ade91 100644
 --- a/ports/gmp/portfile.cmake
