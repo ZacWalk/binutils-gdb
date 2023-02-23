@@ -72,8 +72,8 @@ index 000000000..2c73be304
 +--- a/tests/mpn/t-mod_1.c
 ++++ b/tests/mpn/t-mod_1.c
 +@@ -51,17 +51,17 @@ check_one (mp_srcptr ap, mp_size_t n, mp_limb_t b)
-+ 	  goto fail;
-+ 	}
++     goto fail;
++   }
 +     }
 +-  if (b <= GMP_NUMB_MASK / 3)
 +-    {
