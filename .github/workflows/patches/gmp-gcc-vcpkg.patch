@@ -76,7 +76,7 @@ index 000000000..2c73be304
 +   }
 +     }
 +-  if (b <= GMP_NUMB_MASK / 3)
-++  if (false && b <= GMP_NUMB_MASK / 3)
+++  if (0 && b <= GMP_NUMB_MASK / 3)
 +     {
 +       mp_limb_t pre[6];
 +       mpn_mod_1s_3p_cps (pre, b);
