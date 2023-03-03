@@ -44,18 +44,14 @@ jobs:
         ref: ${{ inputs.branch }}
 
     - name: Build binutils
-      id: binutils-build
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
 
     - name: Minimal console app testing
-      if: ${{ always() && steps.binutils-build.outcome == 'success' }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
 
     - name: Configure OpenBLAS
-      id: openblas-configure
-      if: ${{ always() && steps.binutils-build.outcome == 'success' }}
       shell: cmd
       run: |
         git clone --depth 1 https://github.com/xianyi/OpenBLAS.git openblas
@@ -66,13 +62,11 @@ jobs:
         cmake ..  -G Ninja -DCMAKE_C_COMPILER=clang -DBUILD_WITHOUT_LAPACK=1 -DNOFORTRAN=1 -DDYNAMIC_ARCH=0 -DTARGET=ARMV8 -DARCH=arm64 -DBINARY=64 -DUSE_OPENMP=0 -DCMAKE_SYSTEM_PROCESSOR=ARM64 -DCMAKE_CROSSCOMPILING=0 -DCMAKE_SYSTEM_NAME=Windows
 
     - name: Build and test OpenBLAS
-      if: ${{ always() && steps.openblas-configure.outcome == 'success' }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
 
     - name: Testing GMP(GCC)
       id: gmp-test
-      if: ${{ always() && steps.binutils-build.outcome == 'success' }}
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
 
