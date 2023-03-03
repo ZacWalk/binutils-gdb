@@ -13,26 +13,7 @@ on:
         type: string
 
 jobs:
-  build-aarch64:
 
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Install dependencies
-      run: | 
-        sudo apt-get update
-        sudo apt-get -y install libmpfr-dev
-
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ inputs.branch }}
-    
-    - name: configure
-      run: ./configure --target=aarch64-pe --prefix="$HOME/cross"
-      
-    - name: build
-      run: make
-      
   build-all-targets:
 
     runs-on: ubuntu-latest
@@ -51,9 +32,9 @@ jobs:
       run: ./configure --enable-targets=all
       
     - name: build
-      run: make
+      run: make -j$(nproc)
 
-  test-gmp-aarch64:
+  test-binutils:
 
     runs-on: [self-hosted, Windows, ARM64, GCC]
 
@@ -62,6 +43,38 @@ jobs:
       with:
         ref: ${{ inputs.branch }}
 
+    - name: Build binutils
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\build-binutils.sh
+
+    - name: Minimal console app testing
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\min-con-app-test.sh 
+
+    - name: Configure OpenBLAS
+      shell: cmd
+      run: |
+        git clone --depth 1 https://github.com/xianyi/OpenBLAS.git openblas
+        mkdir openblas\build
+        "C:\Program Files\Git\bin\bash.exe" -c "sed -i '143,145d' ./openblas/common_arm64.h"
+        cd openblas/build
+        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\ARM64\bin
+        cmake ..  -G Ninja -DCMAKE_C_COMPILER=clang -DBUILD_WITHOUT_LAPACK=1 -DNOFORTRAN=1 -DDYNAMIC_ARCH=0 -DTARGET=ARMV8 -DARCH=arm64 -DBINARY=64 -DUSE_OPENMP=0 -DCMAKE_SYSTEM_PROCESSOR=ARM64 -DCMAKE_CROSSCOMPILING=0 -DCMAKE_SYSTEM_NAME=Windows
+
+    - name: Build and test OpenBLAS
+      run: |
+        C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\openblas-test.sh
+
     - name: Testing GMP(GCC)
+      id: gmp-test
       run: |
         C:\Program` Files\Git\bin\bash.exe .github\workflows\scripts\gmp-gcc-aarch64-test.sh
+
+    - name: Extract VCPKG logs
+      if: ${{ always() && steps.gmp-test.outcome != 'success' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: vcpkg-gmp-logs
+        retention-days: 3
+        path: |
+          vcpkg\buildtrees\gmp\*.log
