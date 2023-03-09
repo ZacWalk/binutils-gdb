@@ -11,6 +11,12 @@ on:
         description: 'Branch name'
         required: false
         type: string
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: false
+        type: string
 
 jobs:
 
@@ -28,6 +34,9 @@ jobs:
       with:
         ref: ${{ inputs.branch }}
     
+    - name: Commit SHA
+      run: git show --format="%h" --no-patch
+
     - name: configure
       run: ./configure --enable-targets=all
       
@@ -42,6 +51,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         ref: ${{ inputs.branch }}
+
+    - name: Get scripts if master
+      if: ${{ inputs.branch == 'master'}}
+      run: git checkout aarch64-pe-dev -- .github\workflows\ 
 
     - name: Build binutils
       run: |

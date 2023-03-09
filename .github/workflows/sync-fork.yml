@@ -1,4 +1,4 @@
-name: Sync Fork
+name: Sync Fork and default branch
 
 on:
   workflow_dispatch:
@@ -14,3 +14,21 @@ jobs:
     - env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b master
+  
+  build:
+    name: Build and test latest
+    needs: sync-fork
+    uses: ./.github/workflows/makefile.yml
+    with:
+      branch: master
+  
+  sync-default:
+    name: Sync default (aarch64-pe-dev)
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b aarch64-pe-dev
+      run: syncing!
