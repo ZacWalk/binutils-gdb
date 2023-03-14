@@ -40,7 +40,7 @@ jobs:
         ref: ${{ inputs.branch }}
     
     - name: Merge if required
-      if: ${{ inputs.merge-with-branch != null && inputs.merge-with-branch != "" }}
+      if: ${{ inputs.merge-with-branch != null && inputs.merge-with-branch != '' }}
       run: |
         echo "Merging ${{ inputs.merge-with-branch }} into ${{ github.ref }}"
         git fetch origin ${{ inputs.merge-with-branch }}:${{ inputs.merge-with-branch }}
