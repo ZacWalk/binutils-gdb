@@ -18,6 +18,8 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     git checkout pullrequest
     if [ ! -z "$ci_merge_with_branch" ]; then
         git fetch origin $ci_merge_with_branch:$ci_merge_with_branch
+        git config user.name github-actions
+        git config user.email github-actions@github.com
         git merge $ci_merge_with_branch --no-commit
     fi
     mkdir -p $gcc_build_folder
