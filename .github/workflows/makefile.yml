@@ -17,6 +17,10 @@ on:
         description: 'Branch name'
         required: false
         type: string
+      merge-with-branch: 
+        description: 'Apply merge with this branch'
+        required: false
+        type: string
 
 jobs:
 
@@ -32,19 +36,25 @@ jobs:
         
     - uses: actions/checkout@v3
       with:
+        fetch-depth: ${{ inputs.merge-with-branch == null && 1 || 0 }}
         ref: ${{ inputs.branch }}
     
-    - name: Commit SHA
-      run: git show --format="%h" --no-patch
+    - name: Merge if required
+      if: ${{ inputs.merge-with-branch != null && inputs.merge-with-branch != "" }}
+      run: |
+        echo "Merging ${{ inputs.merge-with-branch }} into ${{ github.ref }}"
+        git fetch origin ${{ inputs.merge-with-branch }}:${{ inputs.merge-with-branch }}
+        git merge ${{ inputs.merge-with-branch }} --no-commit
 
-    - name: configure
-      run: ./configure --enable-targets=all
+    # - name: configure
+    #   run: ./configure --enable-targets=all
       
-    - name: build
-      run: make -j$(nproc)
+    # - name: build
+    #   run: make -j$(nproc)
 
   test-binutils:
-
+    env:
+      ci_merge_with_branch: ${{ inputs.merge-with-branch }}
     runs-on: [self-hosted, Windows, ARM64, GCC]
 
     steps:

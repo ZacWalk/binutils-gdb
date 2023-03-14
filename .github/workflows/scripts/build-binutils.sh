@@ -16,6 +16,10 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     cd binutils-gdb
     git fetch origin $rev_reference:pullrequest
     git checkout pullrequest
+    if [ ! -z "$ci_merge_with_branch" ]; then
+        git fetch origin $ci_merge_with_branch:$ci_merge_with_branch
+        git merge $ci_merge_with_branch --no-commit
+    fi
     mkdir -p $gcc_build_folder
     cd $gcc_build_folder
     $gcc_source_folder/configure --target=aarch64-pe --prefix="\$HOME/cross"
