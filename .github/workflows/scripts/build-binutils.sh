@@ -3,6 +3,8 @@
 set -ex # stop bash script on error
 . .github/workflows/scripts/base.sh
 
+echo $ci_merge_with_branch
+
 ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     set -e # stop bash script on error
     pwd
@@ -16,14 +18,15 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     cd binutils-gdb
     git fetch origin $rev_reference:pullrequest
     git checkout pullrequest
+    echo $ci_merge_with_branch
     if [ ! -z "$ci_merge_with_branch" ]; then
         git fetch origin $ci_merge_with_branch:$ci_merge_with_branch
         git config user.name github-actions
         git config user.email github-actions@github.com
         git merge $ci_merge_with_branch --no-commit
     fi
-    mkdir -p $gcc_build_folder
-    cd $gcc_build_folder
-    $gcc_source_folder/configure --target=aarch64-pe --prefix="\$HOME/cross"
-    make -j\$(nproc)
+    # mkdir -p $gcc_build_folder
+    # cd $gcc_build_folder
+    # $gcc_source_folder/configure --target=aarch64-pe --prefix="\$HOME/cross"
+    # make -j\$(nproc)
 ENDSSH
