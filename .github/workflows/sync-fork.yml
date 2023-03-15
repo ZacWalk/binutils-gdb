@@ -20,7 +20,7 @@ jobs:
     needs: sync-fork
     uses: ./.github/workflows/makefile.yml
     with:
-      branch: aarch64-pe-dev
+      branch: ${{ github.ref }}
       merge-with-branch: master
   
   sync-default:
