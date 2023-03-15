@@ -31,5 +31,4 @@ jobs:
     steps:
     - env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b aarch64-pe-dev
-      run: syncing!
+      run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b aarch64-pe-dev
