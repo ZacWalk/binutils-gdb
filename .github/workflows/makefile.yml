@@ -57,6 +57,7 @@ jobs:
   test-binutils:
     env:
       ci_merge_with_branch: ${{ inputs.merge-with-branch }}
+      ci_test_variable: HelloWorld
     runs-on: [self-hosted, Windows, ARM64, GCC]
 
     steps:
