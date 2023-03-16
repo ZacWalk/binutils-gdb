@@ -16,7 +16,6 @@ ssh -i $gcc_identity $gcc_destination 'bash -sx' << ENDSSH
     cd binutils-gdb
     git fetch origin $rev_reference:pullrequest
     git checkout pullrequest
-    echo $ci_merge_with_branch
     if [ ! -z "$ci_merge_with_branch" ]; then
         git fetch origin $ci_merge_with_branch:$ci_merge_with_branch
         git config user.name github-actions
