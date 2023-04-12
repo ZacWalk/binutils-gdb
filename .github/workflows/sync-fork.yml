@@ -1,4 +1,4 @@
-name: Sync master and build
+name: Sync master and validate dev branch
 
 on:
   workflow_dispatch:
