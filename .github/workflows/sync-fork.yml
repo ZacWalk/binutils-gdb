@@ -1,4 +1,4 @@
-name: Sync Fork
+name: Sync master and validate dev branch
 
 on:
   workflow_dispatch:
@@ -7,10 +7,19 @@ on:
 
 jobs:
   sync-fork:
-    name: Sync Fork
+    name: Sync master
     runs-on: ubuntu-latest
 
     steps:
     - env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: gh repo sync Windows-on-ARM-Experiments/binutils-gdb -b master
+  
+  build:
+    name: Build and test latest
+    needs: sync-fork
+    uses: ./.github/workflows/makefile.yml
+    with:
+      branch: ${{ github.ref }}
+      merge-with-branch: master
+      

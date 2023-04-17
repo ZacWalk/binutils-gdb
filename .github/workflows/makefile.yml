@@ -11,6 +11,16 @@ on:
         description: 'Branch name'
         required: false
         type: string
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: false
+        type: string
+      merge-with-branch: 
+        description: 'Apply merge with this branch'
+        required: false
+        type: string
 
 jobs:
 
@@ -26,8 +36,18 @@ jobs:
         
     - uses: actions/checkout@v3
       with:
+        fetch-depth: ${{ inputs.merge-with-branch == null && 1 || 0 }}
         ref: ${{ inputs.branch }}
     
+    - name: Merge if required
+      if: ${{ inputs.merge-with-branch != null && inputs.merge-with-branch != '' }}
+      run: |
+        echo "Merging ${{ inputs.merge-with-branch }} into ${{ github.ref }}"
+        git fetch origin ${{ inputs.merge-with-branch }}:${{ inputs.merge-with-branch }}
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git merge ${{ inputs.merge-with-branch }} --no-commit
+
     - name: configure
       run: ./configure --enable-targets=all
       
@@ -35,13 +55,18 @@ jobs:
       run: make -j$(nproc)
 
   test-binutils:
-
+    env:
+      ci_merge_with_branch: ${{ inputs.merge-with-branch }}
     runs-on: [self-hosted, Windows, ARM64, GCC]
 
     steps:
     - uses: actions/checkout@v3
       with:
         ref: ${{ inputs.branch }}
+
+    - name: Get scripts if master
+      if: ${{ inputs.branch == 'master'}}
+      run: git checkout aarch64-pe-dev -- .github\workflows\ 
 
     - name: Build binutils
       run: |
